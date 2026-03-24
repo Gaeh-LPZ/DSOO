@@ -1,0 +1,293 @@
+/*
+#Usuario / Role / Permisos
+
+User → UserRole → Role (N:M)
+Role → RolePermission → Permission (N:M)
+
+#Tienda/Inventario
+Store → Stock ← Product (N:M con tabla intermedia)
+
+#Productos/Ventas
+Product → SaleItem ← Sale (N:M)
+
+#Ventas
+User → Sale (1:N)
+Customer → Sale (1:N)
+
+#Detalle Ventas
+Sale → SaleItem (1:N)
+Sale → Payment (1:N)
+
+#Logistica
+Sale → Shipment (1:1)
+
+#Facturacion
+Sale → Invoice (1:1)
+
+#Devoluciones
+Sale → Return (1:N)
+
+#Clientes
+Customer → LoyaltyAccount (1:1)
+Customer → CreditAccount (1:1)
+
+#Compras/Proveedores
+Supplier → PurchaseOrder (1:N)
+PurchaseOrder → PurchaseItem (1:N)
+Product → PurchaseItem (1:N)
+
+EN general es:
+Usuarios → generan → Ventas
+Ventas → contienen → Productos
+Ventas → generan → Pagos / Envíos / Facturas / Devoluciones
+
+Productos ↔ Inventario ↔ Tiendas
+
+Clientes → tienen → Ventas / Crédito / Lealtad
+
+Proveedores → generan → Órdenes de compra → Productos
+*/
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum SaleStatus {
+  PENDING
+  PAID
+  CANCELLED
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  CREDIT
+}
+
+enum PurchaseStatus {
+  PENDING
+  RECEIVED
+  CANCELLED
+}
+
+enum ShipmentStatus { //StatusEnvio
+  PENDING
+  IN_TRANSIT
+  DELIVERED
+}
+
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  roles     UserRole[]
+  sales     Sale[]
+}
+
+model Role {
+  id          String @id @default(uuid())
+  name        String @unique
+  description String?
+
+  users       UserRole[]
+  permissions RolePermission[]
+}
+
+model Permission {
+  id   String @id @default(uuid())
+  name String @unique
+
+  roles RolePermission[]
+}
+
+model UserRole {
+  userId String
+  roleId String
+
+  user User @relation(fields: [userId], references: [id])
+  role Role @relation(fields: [roleId], references: [id])
+
+  @@id([userId, roleId])
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+
+  role       Role       @relation(fields: [roleId], references: [id])
+  permission Permission @relation(fields: [permissionId], references: [id])
+
+  @@id([roleId, permissionId])
+}
+
+
+model Store {
+  id   String @id @default(uuid())
+  name String
+
+  stock Stock[]
+}
+
+model Product {
+  id        String   @id @default(uuid())
+  name      String
+  sku       String   @unique
+  price     Float
+  cost      Float
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  stock     Stock[]
+  saleItems SaleItem[]
+}
+
+model Stock {
+  id        String @id @default(uuid())
+  productId String
+  storeId   String
+  quantity  Int
+
+  product Product @relation(fields: [productId], references: [id])
+  store   Store   @relation(fields: [storeId], references: [id])
+
+  @@unique([productId, storeId])
+}
+
+
+model Customer {  //Cliente
+  id    String @id @default(uuid())
+  name  String
+  email String?
+
+  sales   Sale[]
+  loyalty LoyaltyAccount?
+  credit  CreditAccount?
+}
+
+model LoyaltyAccount {  //Fidelizacion
+  id         String @id @default(uuid())
+  customerId String @unique
+  points     Int    @default(0)
+
+  customer Customer @relation(fields: [customerId], references: [id])
+}
+
+model CreditAccount {
+  id         String @id @default(uuid())
+  customerId String @unique
+  balance    Float
+  interest   Float
+  dueDate    DateTime
+
+  customer Customer @relation(fields: [customerId], references: [id])
+}
+
+
+model Sale {
+  id         String   @id @default(uuid())
+  userId     String
+  customerId String?
+  total      Float
+  status     SaleStatus
+  createdAt  DateTime @default(now())
+
+  user     User      @relation(fields: [userId], references: [id])
+  customer Customer? @relation(fields: [customerId], references: [id])
+
+  items     SaleItem[]
+  payments  Payment[]
+  shipment  Shipment?
+  invoice   Invoice?
+  returns   Return[]
+}
+
+model SaleItem {
+  id        String @id @default(uuid())
+  saleId    String
+  productId String
+  quantity  Int
+  price     Float
+
+  sale    Sale    @relation(fields: [saleId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+}
+
+model Payment {
+  id      String @id @default(uuid())
+  saleId  String
+  amount  Float
+  method  PaymentMethod
+
+  sale Sale @relation(fields: [saleId], references: [id])
+}
+
+
+model Supplier {  //Proveedor
+  id   String @id @default(uuid())
+  name String
+
+  orders PurchaseOrder[]
+}
+
+model PurchaseOrder { //OrdenCompra
+  id         String   @id @default(uuid())
+  supplierId String
+  status     PurchaseStatus
+  createdAt  DateTime @default(now())
+
+  supplier Supplier @relation(fields: [supplierId], references: [id])
+  items    PurchaseItem[]
+}
+
+model PurchaseItem {
+  id        String @id @default(uuid())
+  orderId   String
+  productId String
+  quantity  Int
+  cost      Float
+
+  order   PurchaseOrder @relation(fields: [orderId], references: [id])
+  product Product       @relation(fields: [productId], references: [id])
+}
+
+
+model Shipment {
+  id       String @id @default(uuid())
+  saleId   String @unique
+  status   ShipmentStatus
+  tracking String?
+
+  sale Sale @relation(fields: [saleId], references: [id])
+}
+
+
+model Return {
+  id         String   @id @default(uuid())
+  saleId     String
+  approvedBy String?
+  reason     String
+  createdAt  DateTime @default(now())
+
+  sale Sale @relation(fields: [saleId], references: [id])
+}
+
+
+model Invoice { //Factura
+  id        String   @id @default(uuid())
+  saleId    String   @unique
+  xml       String
+  pdf       String
+  createdAt DateTime @default(now())
+
+  sale Sale @relation(fields: [saleId], references: [id])
+}
