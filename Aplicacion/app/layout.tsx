@@ -2,6 +2,7 @@
 import type { Metadata } from "next";
 import { Noto_Serif, Manrope } from "next/font/google";
 import "./globals.css";
+import Header from "./ui/header";
 
 const notoSerif = Noto_Serif({
   variable: "--font-noto-serif",
@@ -38,7 +39,8 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" 
         />
       </head>
-      <body className="min-h-full flex flex-col font-body">
+      <body className="min-h-full flex flex-col font-body bg-white">
+        <Header/>
         {children}
       </body>
     </html>
