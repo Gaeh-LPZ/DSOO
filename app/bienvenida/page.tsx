@@ -14,13 +14,13 @@ export default function Home() {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
                 <div className="relative z-10 flex flex-col justify-end p-20 text-white">
                     <span className="font-label tracking-[0.2em] mb-4 uppercase text-xs text-tertiary-fixed-dim">
-                        The Digital Curator
+                        La tienda de lujo definitiva en línea 
                     </span>
                     <h1 className="font-headline text-5xl lg:text-7xl italic leading-tight mb-8">
-                        Elevate your <br />everyday lifestyle.
+                        Eleva tu <br />estilo de vida.
                     </h1>
                     <p className="max-w-md font-light leading-relaxed text-lg">
-                        Join an exclusive community dedicated to the art of curated living.
+                        Unete a una comunidad exclusiva dedicada al arte de la vida de alto lujo y exclusividad.
                     </p>
                 </div>
             </aside>
@@ -29,44 +29,44 @@ export default function Home() {
             <section className="flex-1 flex flex-col justify-center px-8 py-12 md:px-16 lg:px-24 bg-surface">
                 <div className="max-w-md w-full mx-auto">
                     <div className="mb-10">
-                        <span className="text-3xl font-headline italic tracking-tighter text-on-surface">The Atelier</span>
-                        <h2 className="font-headline text-3xl text-on-surface mb-2 mt-8 tracking-tight">Create Account</h2>
-                        <p className="text-on-surface-variant text-sm">Become a member of our curated collective.</p>
+                        <span className="text-4xl font-headline italic tracking-tighter text-on-surface">The Luxury store</span>
+                        <h2 className="font-headline text-3xl text-on-surface mb-2 mt-8 tracking-tight">Crea tu cuenta</h2>
+                        <p className="text-on-surface-variant text-sm">Vuelvete miembro de nuestra comunidad exclusiva y comienza a disfrutar de los beneficios.</p>
                     </div>
 
                     <form className="space-y-6">
                         <div className="space-y-4">
                             <input
                                 className="w-full bg-slate-100/50 border-0 border-b border-outline-variant/50 py-3 px-4 focus:ring-0 focus:border-primary focus:bg-slate-100 outline-none transition-all placeholder:text-on-surface-variant/80 text-on-surface rounded-t-md"
-                                placeholder="Full Name"
+                                placeholder="Nombre Completo"
                                 type="text"
                             />
                             <input
                                 className="w-full bg-slate-100/50 border-0 border-b border-outline-variant/50 py-3 px-4 focus:ring-0 focus:border-primary focus:bg-slate-100 outline-none transition-all placeholder:text-on-surface-variant/80 text-on-surface rounded-t-md"
-                                placeholder="Email Address"
+                                placeholder="Dirección de Email"
                                 type="email"
                             />
                             <input
                                 className="w-full bg-slate-100/50 border-0 border-b border-outline-variant/50 py-3 px-4 focus:ring-0 focus:border-primary focus:bg-slate-100 outline-none transition-all placeholder:text-on-surface-variant/80 text-on-surface rounded-t-md"
-                                placeholder="Password"
+                                placeholder="contraseña"
                                 type="password"
                             />
                             <input
                                 className="w-full bg-slate-100/50 border-0 border-b border-outline-variant/50 py-3 px-4 focus:ring-0 focus:border-primary focus:bg-slate-100 outline-none transition-all placeholder:text-on-surface-variant/80 text-on-surface rounded-t-md"
-                                placeholder="Confirm Password"
+                                placeholder="Confirmar Contraseña"
                                 type="password"
                             />
                         </div>
 
                         <button className="w-full silk-gradient text-white py-4 rounded-lg font-label font-medium tracking-wide shadow-xl transition-all active:scale-[0.98] mt-4" type="submit">
-                            Create Account
+                            Crear cuenta
                         </button>
                     </form>
 
                     {/* Divisor */}
                     <div className="relative my-10 flex items-center py-2">
                         <div className="flex-grow border-t border-outline-variant/10"></div>
-                        <span className="flex-shrink mx-4 text-[10px] font-label tracking-widest text-on-surface-variant/40 uppercase">Or continue with</span>
+                        <span className="flex-shrink mx-4 text-[10px] font-label tracking-widest text-on-surface-variant/40 uppercase">O continuar con...</span>
                         <div className="flex-grow border-t border-outline-variant/10"></div>
                     </div>
 
