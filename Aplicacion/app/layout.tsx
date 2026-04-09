@@ -1,20 +1,8 @@
 // app/layout.tsx
 import type { Metadata } from "next";
-import { Noto_Serif, Manrope } from "next/font/google";
+import { notoSerif, manrope } from "./ui/fonts";
 import "./globals.css";
-
-const notoSerif = Noto_Serif({
-  variable: "--font-noto-serif",
-  subsets: ["latin"],
-  style: ["normal", "italic"],
-  weight: ["400", "700"],
-});
-
-const manrope = Manrope({
-  variable: "--font-manrope",
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
-});
+import Header from "./ui/header";
 
 export const metadata: Metadata = {
   title: "The Atelier | Create Account",
@@ -39,6 +27,7 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col font-body">
+        <Header/>
         {children}
       </body>
     </html>
