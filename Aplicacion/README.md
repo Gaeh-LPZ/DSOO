@@ -1,36 +1,129 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
-
-## Getting Started
-
-First, run the development server:
-
+# Levantar Base de datos en /BD-PostgreSQL
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+docker compose up -d
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Instala dependencias en /app
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Configuración de Base de Datos (Prisma)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Ejecuta Migraciones Iniciales
+```bash
+npx prisma migrate dev --name init
+```
 
-## Learn More
+### Ejecuta el seed.ts para caragar datos iniciales a la BD
+```bash
+npx prisma db seed
+```
 
-To learn more about Next.js, take a look at the following resources:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Gestión Visual de Datos
+### Ver la base de datos visualmente
+```bash
+npx prisma studio
+```
+Accede en: [http:localhost:5555](http:localhost:5555) 
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-## Deploy on Vercel
+## Inicia Servidor de Desarrollo
+### Corre aplicacion de Next.js
+```bash
+npm run dev
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Accede en: [http://localhost:3000](http://localhost:3000)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+Estructura a utilizar (Prevista):
+```text
+src/
+│
+├── lib/
+│   └── prisma.ts
+│
+├── infrastructure/
+│   ├── security/
+│   │   ├── hash.service.ts     # Pa Hashear password
+│   │   └── jwt.service.ts      # Pa tokens
+|   |
+├── modules/
+│   ├── user/
+│   │   ├── domain/             # POO (Reglas de negocio)
+│   │   │   ├── User.ts
+│   │   │   ├── Role.ts
+│   │   │   └── Permission.ts
+│   │   │
+│   │   ├── application/        # Casos de uso
+│   │   │   └── user.service.ts
+│   │   │
+│   │   ├── infrastructure/     # Base de Datos (Prisma)
+│   │   │   └── user.repository.ts
+│   │   ├── interfaces/         
+│   │   │   └── types.ts #Interfaces (usar cuando se necesiten)
+│   │   │
+│   │   ├── user.actions.ts     # Actiosnes de User
+│   │   └── user.schema.ts      # Validación (Zod)
+│   |
+│   ├── product/
+│   │   ├── domain/
+│   │   │   ├── Product.ts
+│   │   │   ├── Stock.ts
+│   │   │   └── Store.ts
+│   │   │
+│   │   ├── application/
+│   │   │   └── product.service.ts
+│   │   │
+│   │   ├── infrastructure/
+│   │   │   └── product.repository.ts
+│   │   │
+│   │   └── product.schema.ts
+│   |
+│   ├── sale/
+│   │   ├── domain/
+│   │   │   ├── Sale.ts
+│   │   │   ├── SaleItem.ts
+│   │   │   ├── Payment.ts
+│   │   │   └── enums.ts
+│   │   │
+│   │   ├── application/
+│   │   │   └── sale.service.ts
+│   │   │
+│   │   ├── infrastructure/
+│   │   │   └── sale.repository.ts
+│   │   │
+│   │   └── sale.schema.ts
+│   |
+│   ├── customer/          
+│   ├── supplier/
+│   ├── purchase/
+│   ├── shipment/
+│   ├── invoice/
+│   
+├── shared/                         # Codigo a reutilizar (Errores, Alertas, etc)
+│   ├── errors/
+│   └── utils/
+│
+└── type.ts
+```
+
+
+## Arquitectura DSS
+```text
+user.actions.ts + use.schema.ts
+                |
+                v
+           user.service.ts
+            |         |
+            v         v
+          domain/   user.repository.ts
+                            |
+                            v
+                          Prisma
+                            |
+                            v
+                        BD (PostgreSQL)
+```
