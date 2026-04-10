@@ -13,3 +13,11 @@ export interface ILoyaltyAccount {
 export interface ICustomerWithLoyalty extends ICustomer {
     loyalty: ILoyaltyAccount | null;
 }
+
+export interface ICreditAccount {
+    id: string;
+    customerId: string;
+    balance: number;
+    interest: number;
+    dueDate: Date;
+}
