@@ -98,7 +98,7 @@ export default function ReporteGerencialPage() {
 
       {/* --- COLUMNA DERECHA: CONTENIDO PRINCIPAL --- */}
       {/* El flex-1 asegura que tome el resto del espacio y overflow-y-auto permite scrollear solo el reporte */}
-      <main className="flex-1 overflow-y-auto px-6 lg:px-12 py-12">
+      <main className="flex-1 overflow-y-auto px-6 lg:px-12 py-12 bg-[#fafaf5]">
         <div className="max-w-6xl mx-auto">
           
           {/* Encabezado Editorial */}
