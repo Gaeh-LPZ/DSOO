@@ -13,7 +13,7 @@ import {
 
 export class UserRepository {
 
-  // ─── Include reutilizable ──────────────────────────────────────────────────
+  // Include reutilizable 
   private readonly includeRoles = {
     roles: {
       include: {
@@ -28,7 +28,7 @@ export class UserRepository {
     },
   } as const;
 
-  // ─── Mapeo BD → Dominio ────────────────────────────────────────────────────
+  // Mapeo BD → Dominio 
 
   private mapToUser(data: IUserWithRoles): User {
     return new User(

@@ -13,7 +13,7 @@ export class UserService {
   ) { }
 
   // Caso de uso: Registro de usuario
-  async register(data: {name: string; email: string; password: string;}): Promise<User> {
+  async register(data: { name: string; email: string; password: string; }): Promise<User> {
     const existing = await this.repo.findByEmail(data.email);                             // Verificar que el email sea unico antes de crear
     if (existing) throw new Error("El email ya está registrado");
 
@@ -33,7 +33,7 @@ export class UserService {
   async login(email: string, password: string): Promise<{ token: string }> {
     const user = await this.repo.findByEmail(email);                                      // Busca usuario. NOTA: EL repo devuelve una entidad de dominio User
 
-    if (!user) throw new Error("Credenciales inválidas");                
+    if (!user) throw new Error("Credenciales inválidas");
 
     await user.authenticate(password, this.hashService);                                 // Delegar la validación de contraseña al DOMINIO (User.ts)
 

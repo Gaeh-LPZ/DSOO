@@ -155,7 +155,7 @@ model Stock {
   id        String @id @default(uuid())
   productId String
   storeId   String
-  quantity  Int
+  quantity  Int    @default(0)
 
   product Product @relation(fields: [productId], references: [id])
   store   Store   @relation(fields: [storeId], references: [id])
@@ -163,6 +163,18 @@ model Stock {
   @@unique([productId, storeId])
 }
 
+model StockMovement {
+  id        String   @id @default(uuid())
+  productId String
+  storeId   String
+  quantity  Int
+  type      String   // "IN" | "OUT"
+  reason    String?
+  createdAt DateTime @default(now())
+
+  product Product @relation(fields: [productId], references: [id])
+  store   Store   @relation(fields: [storeId], references: [id])
+}
 
 model Customer {  //Cliente
   id    String @id @default(uuid())
