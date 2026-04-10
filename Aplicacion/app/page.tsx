@@ -22,7 +22,7 @@ export default function Page() {
 
   return (
     <>
-      <Header />
+      
       <main>
         <div className="relative h-screen flex items-center justify-center overflow-hidden bg-black">
           {images.map((src, index) => {

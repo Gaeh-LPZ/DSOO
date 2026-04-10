@@ -4,6 +4,7 @@ import { newsreader } from "./fonts";
 import Link from "next/link";
 import clsx from "clsx";
 import { usePathname } from "next/navigation";
+import path from "path";
 
 export default function Header() {
     const routes = [
@@ -11,12 +12,13 @@ export default function Header() {
         { name: 'Categorias', href: '#' },
         { name: 'Colecciones', href: '#' },
         { name: 'About', href: '#' },
-    ]
+    ]    
 
     const pathname = usePathname();
 
+    
     return (
-        <header className="bg-surface/80 text-black flex flex-row items-center justify-between md:p-10">
+        <header className="bg-zinc-160 text-black flex flex-row items-center justify-between md:p-10">
             <nav className="flex flex-row gap-2.5 text-lg">
                 {routes.map(route => (
                     <Link key={route.name} href={route.href} className={clsx(
