@@ -28,7 +28,7 @@ export class StockRepository {
             data: {
                 id: stock.id,
                 productId: stock.getProductId(),                    // Llamada a los metodos de la clase padre (Stock)
-                storeId: stock.getStoreId,
+                storeId: stock.getStoreId(),
                 quantity: stock.getQuantity(),
                 minQuantity: stock.getMinQuantity()
             }
@@ -49,7 +49,7 @@ export class StockRepository {
             where: {id: stock.id},
             data: {
                 productId: stock.getProductId(),                    // Llamada a los metodos de la clase padre (Stock)
-                storeId: stock.getStoreId,
+                storeId: stock.getStoreId(),
                 quantity: stock.getQuantity(),
                 minQuantity: stock.getMinQuantity()
             }

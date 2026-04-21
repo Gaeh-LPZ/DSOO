@@ -61,6 +61,7 @@ enum SaleStatus {
   PENDING
   PAID
   CANCELLED
+  CREDIT
 }
 
 enum PaymentMethod {
@@ -80,7 +81,6 @@ enum ShipmentStatus { //StatusEnvio
   IN_TRANSIT
   DELIVERED
 }
-
 
 model User {
   id        String   @id @default(uuid())
@@ -156,6 +156,7 @@ model Stock {
   productId String
   storeId   String
   quantity  Int    @default(0)
+  minQuantity Int    @default(0)
 
   product Product @relation(fields: [productId], references: [id])
   store   Store   @relation(fields: [storeId], references: [id])
@@ -204,10 +205,10 @@ model CreditAccount {
   customer Customer @relation(fields: [customerId], references: [id])
 }
 
-
 model Sale {
   id         String   @id @default(uuid())
   userId     String
+  storeId    String
   customerId String?
   total      Float
   status     SaleStatus
