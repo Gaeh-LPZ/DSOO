@@ -257,8 +257,10 @@ model PurchaseOrder { //OrdenCompra
   supplierId String
   status     PurchaseStatus
   createdAt  DateTime @default(now())
-
+  storeId    String
+  
   supplier Supplier @relation(fields: [supplierId], references: [id])
+  store    Store @relation(fields: [storeId], references: [id])
   items    PurchaseItem[]
 }
 
