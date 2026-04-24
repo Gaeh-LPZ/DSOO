@@ -1,3 +1,4 @@
+"use server"
 import { ShipmentService } from "./application/shipment.service";
 import { ShipmentRepository } from "./infrastructure/shipment.repository";
 import { createShipmentSchema, deliverShipmentSchema, dispatchShipmentSchema } from "./shipment.schema";

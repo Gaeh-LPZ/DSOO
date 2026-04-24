@@ -1,3 +1,4 @@
+"use server"
 import { InvoiceService } from "./application/invoice.service";
 import { InvoiceRepository } from "./infrastructure/invoice.repository";
 import { generateInvoiceSchema } from "./invoice.schema";

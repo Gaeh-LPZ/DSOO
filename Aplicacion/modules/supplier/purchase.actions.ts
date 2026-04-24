@@ -1,3 +1,4 @@
+"use server"
 import { PurchaseService } from "./application/purchase.service";
 import { PurchaseRepository } from "./infrastructure/purchase.repository";
 import { cancelOrderSchema, createOrderSchema, receiveOrderSchema } from "./purchase.schema";

@@ -1,3 +1,4 @@
+"use server"
 import { registerCustomerSchema, addPointsSchema } from "./customer.schema";
 import { CustomerService } from "./application/customer.service";
 import { CustomerRepository } from "./infrastructure/customer.repository";

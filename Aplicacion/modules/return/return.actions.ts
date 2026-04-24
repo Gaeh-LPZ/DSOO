@@ -1,3 +1,4 @@
+"use server"
 import { ReturnService } from "./application/return.service";
 import { ReturnRepository } from "./infrastructure/return.repository";
 import { approveReturnSchema, createReturnSchema, getReturnSchema } from "./return.schema";

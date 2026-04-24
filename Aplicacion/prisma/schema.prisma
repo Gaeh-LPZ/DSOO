@@ -136,6 +136,8 @@ model Store {
   name String
 
   stock Stock[]
+  stockMovements StockMovement[]
+  purchaseOrders PurchaseOrder[]
 }
 
 model Product {
@@ -149,6 +151,8 @@ model Product {
 
   stock     Stock[]
   saleItems SaleItem[]
+  stockMovements StockMovement[]
+  purchaseItems  PurchaseItem[]
 }
 
 model Stock {
