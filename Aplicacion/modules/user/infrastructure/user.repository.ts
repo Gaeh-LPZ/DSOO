@@ -45,7 +45,8 @@ export class UserRepository {
             new Permission(rp.permission.id, rp.permission.name)
           )
         )
-      )
+      ),
+      data.storeId
     );
   }
 
@@ -60,7 +61,7 @@ export class UserRepository {
   }
 
   // Metodo pa crear funcion en la BD
-  async create(user: User): Promise<User> {
+  async create(user: User): Promise<void> {
     const data = await prisma.user.create({
       data: {
         id: user.id,
@@ -68,11 +69,10 @@ export class UserRepository {
         email: user.email,
         password: user.getPassword(),
         isActive: user.isActive,
+        storeId: user.storeId
       },
       include: this.includeRoles,
     });
-
-    return this.mapToUser(data as IUserWithRoles);
   }
 
   // Metodo para buscar email
@@ -105,6 +105,7 @@ export class UserRepository {
         name: user.name,
         email: user.email,
         isActive: user.isActive,
+        storeId: user.storeId
       },
       include: this.includeRoles,
     });
@@ -163,5 +164,13 @@ export class UserRepository {
     });
 
     user.roles = user.roles.filter(r => r.id !== roleId);
+  }
+
+  async findAll(): Promise<User[]> {
+    const data = await prisma.user.findMany({
+      where: { isActive: true },
+      include: this.includeRoles
+    })
+    return data.map(u => this.mapToUser(u as IUserWithRoles))
   }
 }

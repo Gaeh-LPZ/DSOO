@@ -24,7 +24,7 @@ export class SaleService {
     ) { }
 
     // Caso de Uso: Crear Venta
-    async createSale(data: { userId: string; storeId: string; customerId?: string; items: { productId: string; quantity: number }[];}) {
+    async createSale(data: { userId: string; storeId: string; customerId?: string; items: { productId: string; quantity: number }[]; }) {
 
         if (data.items.length === 0) {
             throw new Error("La venta debe tener al menos un item");
@@ -81,6 +81,11 @@ export class SaleService {
         return this.repo.addPayment(saleId, payment);
     }
 
+    async findById(saleId: string) {
+        const sale = await this.repo.findById(saleId)
+        if (!sale) throw new Error("Venta no encontrada")
+        return sale
+    }
 
 }
 

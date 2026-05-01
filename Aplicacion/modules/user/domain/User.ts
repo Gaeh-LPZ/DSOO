@@ -8,7 +8,8 @@ export class User {
         public email: string,
         private password: string,
         public isActive: boolean = true,
-        public roles: Role[] = []
+        public roles: Role[] = [],
+        public storeId: string | null = null
     ) { }
 
     addRole(role: Role) {                                                   

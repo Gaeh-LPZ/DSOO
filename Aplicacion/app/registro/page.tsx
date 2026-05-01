@@ -1,4 +1,5 @@
 import Image from "next/image";
+import RegistroForm from "./RegistroForm";
 
 export default function Home() {
     return (
@@ -34,34 +35,7 @@ export default function Home() {
                         <p className="text-on-surface-variant text-sm">Vuelvete miembro de nuestra comunidad exclusiva y comienza a disfrutar de los beneficios.</p>
                     </div>
 
-                    <form className="space-y-6">
-                        <div className="space-y-4">
-                            <input
-                                className="w-full bg-slate-100/50 border-0 border-b border-outline-variant/50 py-3 px-4 focus:ring-0 focus:border-primary focus:bg-slate-100 outline-none transition-all placeholder:text-on-surface-variant/80 text-on-surface rounded-t-md"
-                                placeholder="Nombre Completo"
-                                type="text"
-                            />
-                            <input
-                                className="w-full bg-slate-100/50 border-0 border-b border-outline-variant/50 py-3 px-4 focus:ring-0 focus:border-primary focus:bg-slate-100 outline-none transition-all placeholder:text-on-surface-variant/80 text-on-surface rounded-t-md"
-                                placeholder="Dirección de Email"
-                                type="email"
-                            />
-                            <input
-                                className="w-full bg-slate-100/50 border-0 border-b border-outline-variant/50 py-3 px-4 focus:ring-0 focus:border-primary focus:bg-slate-100 outline-none transition-all placeholder:text-on-surface-variant/80 text-on-surface rounded-t-md"
-                                placeholder="contraseña"
-                                type="password"
-                            />
-                            <input
-                                className="w-full bg-slate-100/50 border-0 border-b border-outline-variant/50 py-3 px-4 focus:ring-0 focus:border-primary focus:bg-slate-100 outline-none transition-all placeholder:text-on-surface-variant/80 text-on-surface rounded-t-md"
-                                placeholder="Confirmar Contraseña"
-                                type="password"
-                            />
-                        </div>
-
-                        <button className="w-full silk-gradient text-white py-4 rounded-lg font-label font-medium tracking-wide shadow-xl transition-all active:scale-[0.98] mt-4" type="submit">
-                            Crear cuenta
-                        </button>
-                    </form>
+                   <RegistroForm/>
 
                     {/* Divisor */}
                     <div className="relative my-10 flex items-center py-2">

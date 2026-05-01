@@ -1,4 +1,5 @@
 "use server"
+import { requireRole } from "@/share/auth";
 import { ReturnService } from "./application/return.service";
 import { ReturnRepository } from "./infrastructure/return.repository";
 import { approveReturnSchema, createReturnSchema, getReturnSchema } from "./return.schema";
@@ -13,6 +14,7 @@ export async function createReturnAction(data: any) {
 }
 
 export async function approveReturnAction(data: any) {
+    await requireRole("GERENTE")
     const parsed = approveReturnSchema.parse(data);
     return returnService.approveReturn(parsed.returnId, parsed.userId);
 }

@@ -1,8 +1,12 @@
+import { NotificationService } from "@/modules/notification/application/notification.service";
 import { Stock } from "../domain/Stock"
 import { StockRepository } from "../infrastructure/stock.repository";
 
 export class StockService {
-    constructor(private repo: StockRepository) { }
+    constructor(
+        private repo: StockRepository,
+        private noti: NotificationService
+    ) { }
 
     // Caso de uso: Incrementar Stock
     async increaseStock(productId: string, storeId: string, cantidad: number) {
@@ -29,7 +33,19 @@ export class StockService {
     async decreaseStock(productId: string, storeId: string, cantidad: number) {
         if (cantidad <= 0) throw new Error("Cantidad inválida");                        // Verifica la cantidad (Modelo de negocio)
 
-        return this.repo.decreaseStockWithMovement(productId, storeId, cantidad);       // Decrementa checando ultimos movimientos
+        await this.repo.decreaseStockWithMovement(productId, storeId, cantidad);       // Decrementa checando ultimos movimientos
+
+        const stock = await this.repo.findByProductAndStore(productId, storeId)
+
+        if (!stock) {
+            throw new Error("Stock no encontrado")
+        }
+
+        const message = `Stock bajo: Producto ${productId} tiene ${stock.getQuantity()} unidades (mínimo: ${stock.getMinQuantity()})`
+
+        if (stock.isBelowMinimum()) {
+            await this.noti.notifyLowStock(productId, storeId, message)
+        }
     }
 
     // Caso de uso: Traer stock

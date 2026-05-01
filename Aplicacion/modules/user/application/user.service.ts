@@ -13,7 +13,7 @@ export class UserService {
   ) { }
 
   // Caso de uso: Registro de usuario
-  async register(data: { name: string; email: string; password: string; }): Promise<User> {
+  async register(data: { name: string; email: string; password: string; }): Promise<void> {
     const existing = await this.repo.findByEmail(data.email);                             // Verificar que el email sea unico antes de crear
     if (existing) throw new Error("El email ya está registrado");
 
@@ -26,7 +26,7 @@ export class UserService {
       hashedPassword
     );
 
-    return this.repo.create(user);                                                        // Persiste y retornar el usuario ya guardado en BD
+    await this.repo.create(user);                                                        // Persiste y ya guardado en BD
   }
 
   // Caso de uso: Loguear Usuario
@@ -76,5 +76,9 @@ export class UserService {
 
     const hashedNew = await this.hashService.hash(newPassword);                       // Hashear la nueva contraseña  
     await this.repo.updatePassword(userId, hashedNew);                                // Actualizar solo el campo password en BD
+  }
+
+  async listUsers(): Promise<User[]> {
+    return this.repo.findAll()
   }
 }

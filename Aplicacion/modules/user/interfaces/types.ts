@@ -16,6 +16,7 @@ export interface IUser {
   password: string;
   isActive: boolean;
   createdAt: Date;
+  storeId: string | null;
 }
 
 export interface IRolePermissionRow {
