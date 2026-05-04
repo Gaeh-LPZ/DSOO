@@ -10,7 +10,7 @@ export class CustomerRepository {
     } as const;
 
     private mapToCustomer(data: ICustomerWithLoyalty): Customer {
-        return new Customer(data.id, data.name, data.email);
+        return new Customer(data.id, data.name, data.email, data.password);
     }
 
     async create(customer: Customer, initialPoints: number): Promise<Customer> {
@@ -19,6 +19,7 @@ export class CustomerRepository {
                 id: customer.id,
                 name: customer.name,
                 email: customer.email,
+                password: customer.getPassword(),
                 loyalty: {
                     create: {
                         id: crypto.randomUUID(),

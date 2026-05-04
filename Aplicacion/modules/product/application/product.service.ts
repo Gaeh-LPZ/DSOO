@@ -5,7 +5,7 @@ export class ProductService {
     constructor(private repo: ProductRepository) {}
 
     // Caso de Uso: Crear Producto
-    async createProduct(data: {name: string; sku: string; price: number; cost: number; }): Promise<Product> {
+    async createProduct(data: {name: string; sku: string; price: number; cost: number; imageUrl?: string; }): Promise<Product> {
 
         const existing = await this.repo.findBySKU(data.sku);               // Busca por SKU (unico)
         if (existing) throw new Error("El SKU ya existe");
@@ -15,14 +15,16 @@ export class ProductService {
             data.name,
             data.sku,
             data.price,
-            data.cost
+            data.cost,
+            true,
+            data.imageUrl ?? null
         );
 
         return this.repo.create(product);
     }
 
     // Caso de uso: Actualizar Producto
-    async updateProduct( id: string, data: { name?: string; price?: number; cost?: number; }): Promise<Product> {
+    async updateProduct( id: string, data: { name?: string; price?: number; cost?: number; imageUrl?:string }): Promise<Product> {
 
         const product = await this.repo.findById(id);                       // Busca producto por ID
         if (!product) throw new Error("Producto no encontrado");            // No encuentra sale alerta
@@ -30,6 +32,7 @@ export class ProductService {
         if (data.name !== undefined) product.changeName(data.name);         // Condicion de que si cambia nombre trae el cambio
         if (data.price !== undefined) product.changePrice(data.price);      // Condicion que si cambia Precio trae el cambio VALIDADO
         if (data.cost !== undefined) product.changeCost(data.cost);         // Condicion que si cambia costo trae el cambio VALIDADO
+        if (data.imageUrl !== undefined) product.imageUrl = data.imageUrl
 
         return this.repo.update(product);
     }

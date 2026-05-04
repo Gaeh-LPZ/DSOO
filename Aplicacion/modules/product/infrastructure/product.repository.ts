@@ -1,13 +1,14 @@
 import { prisma } from "@/lib/prisma";
 import { Product } from "../domain/Product";
 
-interface Iproduct {
+interface IProduct {
     id: string;
     name: string;
     sku: string
     price: number
     cost: number
     isActive: boolean
+    imageUrl: string | null
 }
 
 export class ProductRepository {
@@ -23,7 +24,8 @@ export class ProductRepository {
             data.sku,
             data.price,
             data.cost,
-            data.isActive
+            data.isActive,
+            data.imageUrl
         );
     }
 
@@ -41,7 +43,8 @@ export class ProductRepository {
             data.sku,
             data.price,
             data.cost,
-            data.isActive
+            data.isActive,
+            data.imageUrl
         );
     }
 
@@ -54,7 +57,8 @@ export class ProductRepository {
                 sku: product.getSku(),                  
                 price: product.getPrice(),
                 cost: product.getCost(),
-                isActive: product.getIsActive()
+                isActive: product.getIsActive(),
+                imageUrl: product.imageUrl
             }
         });
         return new Product(
@@ -63,7 +67,8 @@ export class ProductRepository {
             data.sku,
             data.price,
             data.cost,
-            data.isActive
+            data.isActive,
+            data.imageUrl
         );
     }
 
@@ -75,7 +80,8 @@ export class ProductRepository {
                 name: product.getName(),                   // Llamada a los metodos de la clase padre (Productos)
                 price: product.getPrice(),
                 cost: product.getCost(),
-                isActive: product.getIsActive()
+                isActive: product.getIsActive(),
+                imageUrl: product.imageUrl
             }
         });
 
@@ -85,7 +91,8 @@ export class ProductRepository {
             data.sku,
             data.price,
             data.cost,
-            data.isActive
+            data.isActive,
+            data.imageUrl
         );
     }
 
@@ -96,13 +103,14 @@ export class ProductRepository {
         });
 
 
-        return data.map((p: Iproduct) => new Product(
+        return data.map((p: IProduct) => new Product(
             p.id,
             p.name,
             p.sku,
             p.price,
             p.cost,
-            p.isActive
+            p.isActive,
+            p.imageUrl
         ));
     }
 }

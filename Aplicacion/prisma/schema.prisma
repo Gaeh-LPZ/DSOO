@@ -151,6 +151,7 @@ model Product {
   sku       String   @unique
   price     Float
   cost      Float
+  imageUrl     String?
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
 
@@ -191,6 +192,7 @@ model Customer {  //Cliente
   id    String @id @default(uuid())
   name  String
   email String?
+  password String
 
   sales   Sale[]
   loyalty LoyaltyAccount?

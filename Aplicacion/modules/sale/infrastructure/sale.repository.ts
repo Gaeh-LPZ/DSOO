@@ -32,6 +32,7 @@ export class SaleRepository {
                 id: sale.id,
                 userId: sale.userId,
                 storeId: sale.storeId,
+                total: sale.getTotal(),
                 customerId: sale.customerId,
                 status: sale.getStatus(),
 
@@ -147,5 +148,44 @@ export class SaleRepository {
         if (!data) return null;
 
         return this.toDomain(data);
+    }
+
+    async findTopProducts(storeId: string, limit: number = 10) {
+        const result = await prisma.saleItem.groupBy({
+            by: ['productId'],
+            where: {
+                sale: {
+                    storeId: storeId,
+                    status: { in: ['PAID', 'CREDIT'] }
+                }
+            },
+            _sum: {
+                quantity: true
+            },
+            orderBy: {
+                _sum: {
+                    quantity: 'desc'
+                }
+            },
+            take: limit
+        })
+        return result
+    }
+
+    async getTotalSales(storeId: string, startDate: Date, endDate: Date) {
+        const result = await prisma.sale.aggregate({
+            where: {
+                storeId: storeId,
+                status: { in: ['PAID', 'CREDIT'] },
+                createdAt: {
+                    gte: startDate,
+                    lte: endDate
+                }
+            },
+            _sum: {
+                total: true
+            }
+        })
+        return result._sum.total ?? 0
     }
 }

@@ -6,7 +6,8 @@ export class Product {
         public sku: string,
         public price: number,
         public cost: number,
-        public isActive: Boolean = true,
+        public isActive: boolean = true,
+        public imageUrl: string | null = null
     ){
         if (price <= 0) throw new Error("Precio inválido");
         if (cost <=0) throw new Error("Costo inválido");

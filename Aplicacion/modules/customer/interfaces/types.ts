@@ -1,7 +1,8 @@
 export interface ICustomer {
     id: string;
     name: string;
-    email: string | null;
+    email: string | null,
+    password: string;
 }
 
 export interface ILoyaltyAccount {

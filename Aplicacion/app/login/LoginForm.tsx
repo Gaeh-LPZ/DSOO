@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { loginAction } from "@/modules/user/user.actions"
+import { loginCustomerAction } from "@/modules/customer/customer.actions"
 
 export default function LoginForm() {
     const router = useRouter()
@@ -13,18 +14,29 @@ export default function LoginForm() {
     const [loading, setLoading] = useState(false)
 
     async function handleSubmit(e: React.FormEvent) {
-        e.preventDefault()
-        setLoading(true)
-        setError(null)
-        try {
+    e.preventDefault()
+    setLoading(true)
+    setError(null)
+
+    try {
+        const isEmployee = email.endsWith("@luxury.com")
+
+        if (isEmployee) {
+            // login de empleados
             await loginAction({ email, password })
+            router.push("/admin") // o dashboard admin
+        } else {
+            // login de clientes
+            await loginCustomerAction({ email, password })
             router.push("/perfil")
-        } catch (err: any) {
-            setError(err.message)
-        } finally {
-            setLoading(false)
         }
+
+    } catch (err: any) {
+        setError(err.message)
+    } finally {
+        setLoading(false)
     }
+}
 
     return (
         <div>

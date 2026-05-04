@@ -1,19 +1,45 @@
+import 'dotenv/config'
 import { PrismaClient, SaleStatus, PaymentMethod, PurchaseStatus, ShipmentStatus } from '@prisma/client'
 import * as bcrypt from 'bcrypt'
+import { CloudinaryService } from '@/infrastructure/cloudinary/cloudinary.service'
+import fs from 'fs'
+import path from 'path'
 
 const prisma = new PrismaClient()
+const cloudinary = new CloudinaryService()
+
+async function uploadProductImage(filename: string): Promise<string> {
+  const imagePath = path.join(__dirname, 'seed-images', filename)
+  const buffer = fs.readFileSync(imagePath)
+
+  try {
+    const url = await Promise.race([
+      cloudinary.uploadImage(buffer, 'products'),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Timeout manual')), 10000)
+      )
+    ])
+
+    console.log(`${filename} subido`)
+    return url as string
+  } catch (error) {
+    console.error(`Error subiendo ${filename}:`, error)
+
+    return 'https://via.placeholder.com/300'
+  }
+}
 
 async function main() {
   console.log('Iniciando seed...')
 
   // Permissions 
   const permissions = await Promise.all([
-    prisma.permission.upsert({ where: { name: 'sales:read'     }, update: {}, create: { name: 'sales:read'     } }),
-    prisma.permission.upsert({ where: { name: 'sales:write'    }, update: {}, create: { name: 'sales:write'    } }),
+    prisma.permission.upsert({ where: { name: 'sales:read' }, update: {}, create: { name: 'sales:read' } }),
+    prisma.permission.upsert({ where: { name: 'sales:write' }, update: {}, create: { name: 'sales:write' } }),
     prisma.permission.upsert({ where: { name: 'inventory:read' }, update: {}, create: { name: 'inventory:read' } }),
-    prisma.permission.upsert({ where: { name: 'inventory:write'}, update: {}, create: { name: 'inventory:write'} }),
-    prisma.permission.upsert({ where: { name: 'reports:read'   }, update: {}, create: { name: 'reports:read'   } }),
-    prisma.permission.upsert({ where: { name: 'admin:all'      }, update: {}, create: { name: 'admin:all'      } }),
+    prisma.permission.upsert({ where: { name: 'inventory:write' }, update: {}, create: { name: 'inventory:write' } }),
+    prisma.permission.upsert({ where: { name: 'reports:read' }, update: {}, create: { name: 'reports:read' } }),
+    prisma.permission.upsert({ where: { name: 'admin:all' }, update: {}, create: { name: 'admin:all' } }),
   ])
   console.log('ermissions creados')
 
@@ -38,9 +64,9 @@ async function main() {
       description: 'Puede registrar ventas',
       permissions: {
         create: [
-          { permissionId: permissions[0].id }, 
-          { permissionId: permissions[1].id }, 
-          { permissionId: permissions[2].id }, 
+          { permissionId: permissions[0].id },
+          { permissionId: permissions[1].id },
+          { permissionId: permissions[2].id },
         ]
       }
     }
@@ -88,26 +114,32 @@ async function main() {
   console.log('Tiendas creadas')
 
   // Products 
+  console.log('Subiendo imágenes a Cloudinary...')
+  const laptopUrl = await uploadProductImage('laptop.jpg')
+  const mouseUrl = await uploadProductImage('mouse.jpg')
+  const tecladoUrl = await uploadProductImage('teclado.jpg')
+  const monitorUrl = await uploadProductImage('monitor.jpg')
+
   const products = await Promise.all([
     prisma.product.upsert({
       where: { sku: 'PROD-001' },
       update: {},
-      create: { name: 'Laptop HP 15"', sku: 'PROD-001', price: 12999.00, cost: 9500.00 }
+      create: { name: 'Laptop HP 15"', sku: 'PROD-001', price: 12999.00, cost: 9500.00, imageUrl: laptopUrl }
     }),
     prisma.product.upsert({
       where: { sku: 'PROD-002' },
       update: {},
-      create: { name: 'Mouse Inalámbrico', sku: 'PROD-002', price: 349.00, cost: 180.00 }
+      create: { name: 'Mouse Inalámbrico', sku: 'PROD-002', price: 349.00, cost: 180.00, imageUrl: mouseUrl }
     }),
     prisma.product.upsert({
       where: { sku: 'PROD-003' },
       update: {},
-      create: { name: 'Teclado Mecánico', sku: 'PROD-003', price: 899.00, cost: 500.00 }
+      create: { name: 'Teclado Mecánico', sku: 'PROD-003', price: 899.00, cost: 500.00, imageUrl: tecladoUrl }
     }),
     prisma.product.upsert({
       where: { sku: 'PROD-004' },
       update: {},
-      create: { name: 'Monitor 24"', sku: 'PROD-004', price: 4500.00, cost: 3000.00 }
+      create: { name: 'Monitor 24"', sku: 'PROD-004', price: 4500.00, cost: 3000.00, imageUrl: monitorUrl }
     }),
   ])
   console.log('Productos creados')
@@ -130,9 +162,9 @@ async function main() {
   // Stock Movements
   await prisma.stockMovement.createMany({
     data: [
-      { productId: products[0].id, storeId: storeCentral.id, quantity: 50, type: 'IN',  reason: 'Carga inicial' },
-      { productId: products[1].id, storeId: storeCentral.id, quantity: 50, type: 'IN',  reason: 'Carga inicial' },
-      { productId: products[0].id, storeId: storeCentral.id, quantity: 2,  type: 'OUT', reason: 'Venta #1' },
+      { productId: products[0].id, storeId: storeCentral.id, quantity: 50, type: 'IN', reason: 'Carga inicial' },
+      { productId: products[1].id, storeId: storeCentral.id, quantity: 50, type: 'IN', reason: 'Carga inicial' },
+      { productId: products[0].id, storeId: storeCentral.id, quantity: 2, type: 'OUT', reason: 'Venta #1' },
     ],
     skipDuplicates: true,
   })
@@ -146,8 +178,9 @@ async function main() {
       id: 'customer-1',
       name: 'María López',
       email: 'maria@gmail.com',
+      password: hashedPassword,
       loyalty: { create: { points: 150 } },
-      credit:  { create: { balance: 5000.00, interest: 0.12, dueDate: new Date('2025-12-31') } }
+      credit: { create: { balance: 5000.00, interest: 0.12, dueDate: new Date('2025-12-31') } }
     }
   })
 
@@ -158,6 +191,7 @@ async function main() {
       id: 'customer-2',
       name: 'Carlos Ruiz',
       email: 'carlos@gmail.com',
+      password: hashedPassword,
       loyalty: { create: { points: 50 } }
     }
   })
@@ -166,15 +200,15 @@ async function main() {
   // Sales
   const sale1 = await prisma.sale.create({
     data: {
-      userId:     adminUser.id,
-      storeId:    storeCentral.id,
+      userId: adminUser.id,
+      storeId: storeCentral.id,
       customerId: customer1.id,
-      total:      13348.00,
-      status:     SaleStatus.PAID,
+      total: 13348.00,
+      status: SaleStatus.PAID,
       items: {
         create: [
           { productId: products[0].id, quantity: 1, price: 12999.00 },
-          { productId: products[1].id, quantity: 1, price:   349.00 },
+          { productId: products[1].id, quantity: 1, price: 349.00 },
         ]
       },
       payments: {
@@ -191,10 +225,10 @@ async function main() {
 
   const sale2 = await prisma.sale.create({
     data: {
-      userId:  cashierUser.id,
+      userId: cashierUser.id,
       storeId: storeCentral.id,
-      total:   899.00,
-      status:  SaleStatus.PENDING,
+      total: 899.00,
+      status: SaleStatus.PENDING,
       items: {
         create: [{ productId: products[2].id, quantity: 1, price: 899.00 }]
       },
@@ -208,9 +242,9 @@ async function main() {
   // Return
   await prisma.return.create({
     data: {
-      saleId:     sale1.id,
+      saleId: sale1.id,
       approvedBy: adminUser.id,
-      reason:     'Producto defectuoso'
+      reason: 'Producto defectuoso'
     }
   })
   console.log('Devolución creada')
@@ -225,12 +259,12 @@ async function main() {
   await prisma.purchaseOrder.create({
     data: {
       supplierId: supplier.id,
-      storeId:    storeCentral.id,
-      status:     PurchaseStatus.RECEIVED,
+      storeId: storeCentral.id,
+      status: PurchaseStatus.RECEIVED,
       items: {
         create: [
           { productId: products[0].id, quantity: 10, cost: 9500.00 },
-          { productId: products[1].id, quantity: 30, cost:  180.00 },
+          { productId: products[1].id, quantity: 30, cost: 180.00 },
         ]
       }
     }
