@@ -14,29 +14,27 @@ export default function LoginForm() {
     const [loading, setLoading] = useState(false)
 
     async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setLoading(true)
-    setError(null)
+        e.preventDefault()
+        setLoading(true)
+        setError(null)
 
-    try {
-        const isEmployee = email.endsWith("@luxury.com")
-
-        if (isEmployee) {
-            // login de empleados
-            await loginAction({ email, password })
-            router.push("/admin") // o dashboard admin
-        } else {
-            // login de clientes
-            await loginCustomerAction({ email, password })
+        try {
+            // Llamas a tu acción de login con el email y password
+            const resultado = await loginCustomerAction({ email, password })
+            
+            // Asumiendo que tu acción no lanza error si es correcto
+            // 1. ¡AQUÍ GUARDAMOS EL CORREO!
+            localStorage.setItem("usuarioActivo", email);
+            
+            // 2. Y AHORA SÍ, LO MANDAMOS AL PERFIL
             router.push("/perfil")
+            
+        } catch (err: any) {
+            setError(err.message || "Credenciales inválidas")
+        } finally {
+            setLoading(false)
         }
-
-    } catch (err: any) {
-        setError(err.message)
-    } finally {
-        setLoading(false)
     }
-}
 
     return (
         <div>

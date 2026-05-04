@@ -1,12 +1,45 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+// Importamos la acción que trae el cliente y su monedero
+import { actionObtenerPerfil } from "@/modules/customer/customer.actions"; 
 
 // Definimos los tipos de pestañas disponibles
 type TabType = "datos" | "pedidos" | "direcciones" | "pagos" | "seguridad";
 
 export default function PerfilPage() {
   const [activeTab, setActiveTab] = useState<TabType>("datos");
+  
+  // Nuevo estado para guardar los datos reales de la base de datos
+  const [cliente, setCliente] = useState<any>(null);
+
+  // Cargamos los datos al montar el componente
+  useEffect(() => {
+    const cargarPerfil = async () => {
+      const correoGuardado = localStorage.getItem("usuarioActivo");
+      
+      if (correoGuardado) {
+        const datos = await actionObtenerPerfil(correoGuardado); 
+        setCliente(datos);
+
+        // --- ¡AQUÍ ESTÁ TU ALERTA DE BIENVENIDA! ---
+        // Verificamos si ya le dimos la bienvenida en esta sesión
+        if (!sessionStorage.getItem("bienvenidaMostrada")) {
+          // Mostramos la alerta nativa del navegador con su nombre y puntos
+          alert(`¡Bienvenido al programa de lealtad, ${datos?.name}! \nTu saldo actual es de ${datos?.loyalty?.points || 0} puntos.`);
+          
+          // Marcamos que ya se mostró para no molestar al usuario de nuevo
+          sessionStorage.setItem("bienvenidaMostrada", "true");
+        }
+        // -------------------------------------------
+
+      } else {
+        window.location.href = "/registro";
+      }
+    };
+    
+    cargarPerfil();
+  }, []);
 
   // Función para manejar las clases CSS activas/inactivas del menú lateral
   const getTabClass = (tabName: TabType) => {
@@ -29,7 +62,8 @@ export default function PerfilPage() {
               <span className="material-symbols-outlined text-3xl">person</span>
             </div>
             <div>
-              <h2 className="font-semibold text-slate-900">Ana García</h2>
+              {/* Cargamos el nombre dinámico (o un texto de carga) */}
+              <h2 className="font-semibold text-slate-900">{cliente ? cliente.name : "Cargando..."}</h2>
               <p className="text-sm text-slate-500">Miembro Atelier</p>
             </div>
           </div>
@@ -77,14 +111,30 @@ export default function PerfilPage() {
                   Editar Datos
                 </button>
               </div>
+
+              {/* --- NUEVA TARJETA DE MONEDERO ELECTRÓNICO --- */}
+              <div className="mb-8 p-6 bg-gradient-to-br from-blue-600 to-indigo-800 rounded-xl text-white shadow-md flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-semibold mb-1 opacity-90">Monedero Electrónico</h2>
+                  <p className="text-sm opacity-75">Programa de Lealtad</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-5xl font-bold">
+                    {/* Imprimimos los puntos del cliente */}
+                    {cliente?.loyalty?.points || 0} <span className="text-xl font-medium opacity-80">pts</span>
+                  </p>
+                </div>
+              </div>
+              {/* --------------------------------------------- */}
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-slate-500 mb-1">Nombre Completo</label>
-                  <p className="text-slate-900 font-medium py-2 border-b border-slate-200">Ana García López</p>
+                  <p className="text-slate-900 font-medium py-2 border-b border-slate-200">{cliente?.name || "---"}</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-500 mb-1">Correo Electrónico</label>
-                  <p className="text-slate-900 font-medium py-2 border-b border-slate-200">ana.garcia@ejemplo.com</p>
+                  <p className="text-slate-900 font-medium py-2 border-b border-slate-200">{cliente?.email || "---"}</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-500 mb-1">Teléfono</label>
@@ -118,7 +168,6 @@ export default function PerfilPage() {
                     </tr>
                   </thead>
                   <tbody className="text-sm">
-                    {/* Fila de ejemplo 1 */}
                     <tr className="border-b border-slate-100">
                       <td className="py-4 font-medium">#ORD-9823</td>
                       <td className="py-4 text-slate-600">12 Mar 2026</td>
@@ -128,20 +177,6 @@ export default function PerfilPage() {
                         </span>
                       </td>
                       <td className="py-4 font-medium">$4,500.00</td>
-                      <td className="py-4 text-right">
-                        <button className="text-slate-600 hover:text-slate-900 underline">Ver Detalles</button>
-                      </td>
-                    </tr>
-                    {/* Fila de ejemplo 2 */}
-                    <tr className="border-b border-slate-100">
-                      <td className="py-4 font-medium">#ORD-9755</td>
-                      <td className="py-4 text-slate-600">28 Feb 2026</td>
-                      <td className="py-4">
-                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                          En Tránsito
-                        </span>
-                      </td>
-                      <td className="py-4 font-medium">$1,250.00</td>
                       <td className="py-4 text-right">
                         <button className="text-slate-600 hover:text-slate-900 underline">Ver Detalles</button>
                       </td>
@@ -163,7 +198,6 @@ export default function PerfilPage() {
                 </button>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Tarjeta de Dirección Predeterminada */}
                 <div className="border-2 border-slate-900 rounded-xl p-5 relative">
                   <div className="absolute top-0 right-0 bg-slate-900 text-white text-xs font-bold px-3 py-1 rounded-bl-lg rounded-tr-lg">
                     PREDETERMINADA
@@ -193,7 +227,6 @@ export default function PerfilPage() {
                 </button>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Tarjeta de Crédito Visual */}
                 <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-6 text-white relative overflow-hidden shadow-md">
                   <div className="absolute top-4 right-4 bg-white/20 px-2 py-1 rounded text-xs font-semibold backdrop-blur-sm">
                     PREDETERMINADA
@@ -204,7 +237,7 @@ export default function PerfilPage() {
                   <div className="flex justify-between items-end">
                     <div>
                       <p className="text-xs text-slate-300 uppercase">Titular</p>
-                      <p className="font-medium text-sm">ANA GARCÍA</p>
+                      <p className="font-medium text-sm">{cliente?.name?.toUpperCase() || "ANA GARCÍA"}</p>
                     </div>
                     <div>
                       <p className="text-xs text-slate-300 uppercase">Expira</p>
@@ -237,8 +270,6 @@ export default function PerfilPage() {
                   </button>
                 </div>
               </div>
-
-
             </div>
           )}
 

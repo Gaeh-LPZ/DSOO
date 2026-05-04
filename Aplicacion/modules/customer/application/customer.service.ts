@@ -3,6 +3,8 @@ import { Customer } from "../domain/Customer";
 import { LoyaltyAccount } from "../domain/LoyaltyAccount";
 import { HashService } from "@/infrastructure/security/has.service";
 import { JwtService } from "@/infrastructure/security/jwt.service";
+import { prisma } from "@/lib/prisma";
+import bcrypt from "bcryptjs";
 
 export class CustomerService {
     constructor(
@@ -46,3 +48,65 @@ export class CustomerService {
         return { token };
     }
 }
+
+export const registrarNuevoCliente = async (datosCliente: {
+  nombreCompleto: string;
+  correoElectronico: string;
+  telefono: string;
+  rfc?: string;
+  fechaNacimiento: Date;
+  password: string; // <-- NUEVO
+}) => {
+  try {
+    // 1. Validar la regla de negocio: Edad mínima 18 años
+    const hoy = new Date();
+    let edad = hoy.getFullYear() - datosCliente.fechaNacimiento.getFullYear();
+    const m = hoy.getMonth() - datosCliente.fechaNacimiento.getMonth();
+    if (m < 0 || (m === 0 && hoy.getDate() < datosCliente.fechaNacimiento.getDate())) {
+      edad--;
+    }
+    if (edad < 18) {
+      return { success: false, message: "El cliente debe ser mayor de 18 años." };
+    }
+
+    // 2. Verificar duplicados
+    const clienteExistente = await prisma.customer.findFirst({
+      where: { email: datosCliente.correoElectronico }
+    });
+
+    if (clienteExistente) {
+      return { success: false, message: "El correo electrónico ya está registrado." };
+    }
+
+    // Encriptamos la contraseña real que ingresó el usuario
+    const hashedPassword = bcrypt.hashSync(datosCliente.password, 10);
+
+    // 3. Generar número de tarjeta
+    const numeroTarjeta = 'LT-' + Math.random().toString(36).substring(2, 11).toUpperCase();
+
+    // 4. Persistencia en base de datos con Transacción
+    const nuevoCliente = await prisma.$transaction(async (tx) => {
+      const cliente = await tx.customer.create({
+        data: {
+          name: datosCliente.nombreCompleto,
+          email: datosCliente.correoElectronico,
+          password: hashedPassword, // <-- USAMOS LA CONTRASEÑA ENCRIPTADA
+          loyalty: { 
+            create: {
+              points: 100 
+            }
+          }
+        }
+      });
+      return cliente;
+    });
+
+    console.log(`[SIMULACIÓN] Enviando correo de bienvenida a: ${datosCliente.correoElectronico}`);
+
+    return { success: true, message: "Registro exitoso", data: nuevoCliente };
+
+  } catch (error) {
+    console.error("Error en registrarNuevoCliente:", error);
+    return { success: false, message: "Error interno al registrar el cliente." };
+  }
+};
