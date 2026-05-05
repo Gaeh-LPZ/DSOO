@@ -5,7 +5,10 @@ export class Customer {
         public id: string,
         public name: string,
         public email: string | null,
-        private password: string
+        private password: string,
+        public phone: string | null,
+        public birthDate: Date | null,
+        public rfc: string | null
     ) { }
 
     updateName(newName: string): void {

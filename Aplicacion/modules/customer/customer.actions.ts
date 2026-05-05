@@ -1,12 +1,11 @@
 "use server"
-import { registerCustomerSchema, addPointsSchema, loginSchema } from "./customer.schema";
+import { registerCustomerSchema, addPointsSchema, loginSchema, updateCustomerSchema } from "./customer.schema";
 import { CustomerService } from "./application/customer.service";
 import { CustomerRepository } from "./infrastructure/customer.repository";
 import { cookies } from "next/headers";
 import { HashService } from "@/infrastructure/security/has.service";
 import { JwtService } from "@/infrastructure/security/jwt.service";
-import { registrarNuevoCliente } from './application/customer.service';
-import { prisma } from "@/lib/prisma";
+import { revalidatePath } from "next/cache";
 
 const customerRepo = new CustomerRepository();
 const hashService = new HashService();
@@ -14,8 +13,13 @@ const jwtService = new JwtService();
 const customerService = new CustomerService(customerRepo, hashService, jwtService);
 
 export async function registerCustomerAction(data: any) {
-    const parsed = registerCustomerSchema.parse(data);
-    return customerService.register(parsed);
+    try {
+        const parsed = registerCustomerSchema.parse(data);
+        await customerService.register(parsed);
+        return { success: true, message: "Registro exitoso." };
+    } catch (error: any) {
+        return { success: false, message: error.message || "Error al registrarse." };
+    }
 }
 
 export async function addPointsAction(data: any) {
@@ -36,43 +40,33 @@ export async function loginCustomerAction(data: any) {
             })
 }
 
-export async function actionRegistrarCliente(formData: FormData) {
-  const nombreCompleto = formData.get('nombre') as string;
-  const correoElectronico = formData.get('correo') as string;
-  const telefono = formData.get('telefono') as string;
-  const rfc = formData.get('rfc') as string;
-  const fechaNacimientoStr = formData.get('fechaNacimiento') as string;
-  const password = formData.get('password') as string; // <-- NUEVO
+export async function updateCustomerAction(formData: any) {
+    try {
+        const token = (await cookies()).get("token")?.value;
+        if (!token) return { success: false, message: "No autorizado." };
 
-  if (!nombreCompleto || !correoElectronico || !fechaNacimientoStr || !password) {
-    return { success: false, message: "Faltan campos obligatorios." };
-  }
+        const payload = await jwtService.verify(token) as { userId: string };
+        const parsed = updateCustomerSchema.parse(formData);
 
-  const datos = {
-    nombreCompleto,
-    correoElectronico,
-    telefono,
-    rfc,
-    fechaNacimiento: new Date(fechaNacimientoStr),
-    password // <-- NUEVO
-  };
+        await customerService.updateCustomer(payload.userId, parsed);
 
-  const resultado = await registrarNuevoCliente(datos);
-  return resultado;
+        revalidatePath("/perfil");
+        return { success: true, message: "Perfil actualizado." };
+    } catch (error: any) {
+        return { success: false, message: error.message || "Error al actualizar." };
+    }
 }
 
-export async function actionObtenerPerfil(emailUsuario: string) {
-  try {
-    const cliente = await prisma.customer.findFirst({
-      where: { email: emailUsuario },
-      // ¡ESTO ES LO QUE HACE LA MAGIA PARA TRAER LOS PUNTOS!
-      include: { 
-        loyalty: true 
-      }
-    });
-    return cliente;
-  } catch (error) {
-    console.error(error);
-    return null;
-  }
+export async function getCustomerProfileAction() {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("token")?.value;
+    if (!token) return { error: "No autorizado" };
+
+    try {
+        const payload = await jwtService.verify(token) as { userId: string };
+        const data = await customerService.getProfile(payload.userId);
+        return { success: true, data };
+    } catch (e) {
+        return { error: "Error al obtener perfil" };
+    }
 }

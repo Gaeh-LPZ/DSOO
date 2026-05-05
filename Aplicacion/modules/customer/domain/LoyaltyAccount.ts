@@ -3,6 +3,7 @@ export class LoyaltyAccount {
         public id: string,
         public customerId: string,
         public points: number = 0,
+        public cardNumber: string = LoyaltyAccount.generateCardNumber()
     ) { }
 
     // bonificación al registrarse
@@ -20,5 +21,9 @@ export class LoyaltyAccount {
 
     getBalance(): number {
         return this.points;
+    }
+
+    static generateCardNumber(): string {
+        return "LT-" + Math.random().toString(36).substring(2, 11).toUpperCase();
     }
 }

@@ -3,12 +3,16 @@ export interface ICustomer {
     name: string;
     email: string | null,
     password: string;
+    phone: string | null ,
+    birthDate: Date | null,
+    rfc: string | null
 }
 
 export interface ILoyaltyAccount {
     id: string;
     customerId: string;
     points: number;
+    cardNumber: string;
 }
 
 export interface ICustomerWithLoyalty extends ICustomer {

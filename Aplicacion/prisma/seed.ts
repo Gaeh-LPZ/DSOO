@@ -179,8 +179,15 @@ async function main() {
       name: 'María López',
       email: 'maria@gmail.com',
       password: hashedPassword,
-      loyalty: { create: { points: 150 } },
-      credit: { create: { balance: 5000.00, interest: 0.12, dueDate: new Date('2025-12-31') } }
+      loyalty: {
+        create: {
+          points: 150,
+          cardNumber: 'LT-' + Math.random().toString(36).substring(2, 11).toUpperCase(), // 👈
+        }
+      },
+      credit: {
+        create: { balance: 5000.00, interest: 0.12, dueDate: new Date('2025-12-31') }
+      }
     }
   })
 
@@ -192,7 +199,12 @@ async function main() {
       name: 'Carlos Ruiz',
       email: 'carlos@gmail.com',
       password: hashedPassword,
-      loyalty: { create: { points: 50 } }
+      loyalty: {
+        create: {
+          points: 50,
+          cardNumber: 'LT-' + Math.random().toString(36).substring(2, 11).toUpperCase(), // 👈
+        }
+      }
     }
   })
   console.log('Clientes creados')

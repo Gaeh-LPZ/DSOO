@@ -19,16 +19,17 @@ export default function LoginForm() {
         setError(null)
 
         try {
-            // Llamas a tu acción de login con el email y password
-            const resultado = await loginCustomerAction({ email, password })
+            const isEmployee = email.endsWith("@luxury.com")
             
-            // Asumiendo que tu acción no lanza error si es correcto
-            // 1. ¡AQUÍ GUARDAMOS EL CORREO!
-            localStorage.setItem("usuarioActivo", email);
-            
-            // 2. Y AHORA SÍ, LO MANDAMOS AL PERFIL
-            router.push("/perfil")
-            
+            if(isEmployee){
+                // Login Empleados
+                await loginAction({email, password})
+                router.push("/Admin")
+                
+            }else{
+                await loginCustomerAction({email, password})
+                router.push("/perfil")
+            }
         } catch (err: any) {
             setError(err.message || "Credenciales inválidas")
         } finally {

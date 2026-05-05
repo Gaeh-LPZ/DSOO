@@ -15,3 +15,18 @@ export async function requireRole(role: string) {
 
     return payload
 }
+
+export async function getSession() {
+    const cookieStore = await cookies(); 
+    const token = cookieStore.get("token")?.value;
+
+    if (!token) return null;
+
+    try {
+        const payload = await jwtService.verify(token);
+        return payload as { userId: string };
+    } catch (error) {
+        console.error("Token inválido o expirado");
+        return null;
+    }
+}

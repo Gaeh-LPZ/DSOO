@@ -193,6 +193,9 @@ model Customer {  //Cliente
   name  String
   email String?
   password String
+  phone String?
+  birthDate DateTime?
+  rfc String?
 
   sales   Sale[]
   loyalty LoyaltyAccount?
@@ -203,6 +206,7 @@ model LoyaltyAccount {  //Fidelizacion
   id         String @id @default(uuid())
   customerId String @unique
   points     Int    @default(0)
+  cardNumber String @unique
 
   customer Customer @relation(fields: [customerId], references: [id])
 }

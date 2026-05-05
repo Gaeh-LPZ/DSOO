@@ -127,3 +127,24 @@ user.actions.ts + use.schema.ts
                             v
                         BD (PostgreSQL)
 ```
+
+## Entrar a mi BD desde BASH
+
+### Ver el nombre de tu contenedor
+```bash
+docker ps
+```
+
+### Entrar al contenedor
+```bash
+docker exec -it <nombre_contenedor> psql -U <usuario> -d <nombre_db>
+```
+
+### Comandos Utiles
+```bash
+\l          -- listar todas las bases de datos
+\c nombre   -- conectarse a una base de datos
+\dt         -- listar tablas
+\d tabla    -- describir una tabla
+\q          -- salir
+```

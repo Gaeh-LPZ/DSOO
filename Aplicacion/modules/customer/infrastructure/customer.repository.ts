@@ -10,20 +10,30 @@ export class CustomerRepository {
     } as const;
 
     private mapToCustomer(data: ICustomerWithLoyalty): Customer {
-        return new Customer(data.id, data.name, data.email, data.password);
+        return new Customer(
+            data.id,
+            data.name,
+            data.email,
+            data.password,
+            data.phone,
+            data.birthDate,
+            data.rfc,
+        );
     }
 
-    async create(customer: Customer, initialPoints: number): Promise<Customer> {
+    async create(customer: Customer, initialPoints: number, cardNumber: string): Promise<Customer> {
         const data = await prisma.customer.create({
             data: {
                 id: customer.id,
                 name: customer.name,
                 email: customer.email,
                 password: customer.getPassword(),
+                birthDate: customer.birthDate,
                 loyalty: {
                     create: {
                         id: crypto.randomUUID(),
                         points: initialPoints,
+                        cardNumber: cardNumber,
                     },
                 },
             },
@@ -50,12 +60,21 @@ export class CustomerRepository {
         return this.mapToCustomer(data as ICustomerWithLoyalty);
     }
 
+    async update(id: string, fields: { name?: string; email?: string; phone?: string; birthDate?: Date; rfc?: string; }): Promise<Customer> {
+        const data = await prisma.customer.update({
+            where: { id },
+            data: fields,
+            include: this.includeLoyalty,
+        });
+        return this.mapToCustomer(data as ICustomerWithLoyalty);
+    }
+
     async findLoyaltyByCustomerId(customerId: string): Promise<LoyaltyAccount> {
         const data = await prisma.loyaltyAccount.findUnique({
             where: { customerId },
         });
         if (!data) throw new Error("Cuenta de lealtad no encontrada");
-        return new LoyaltyAccount(data.id, data.customerId, data.points);
+        return new LoyaltyAccount(data.id, data.customerId, data.points, data.cardNumber);
     }
 
     async updatePoints(loyalty: LoyaltyAccount): Promise<void> {
