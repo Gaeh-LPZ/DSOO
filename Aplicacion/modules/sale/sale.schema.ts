@@ -19,3 +19,14 @@ export const paySaleSchema = z.object({
 export const getSaleSchema = z.object({
     saleId: z.string().uuid(),
 })
+
+export const getTopProductsSchema = z.object({
+    storeId: z.string(),
+    limit: z.number().int().positive().optional(),
+})
+
+export const getTotalSalesSchema = z.object({
+    storeId: z.string(),
+    startDate: z.coerce.date(),
+    endDate: z.coerce.date(),
+})

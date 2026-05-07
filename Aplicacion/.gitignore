@@ -1,0 +1,9 @@
+#Dependencias
+Aplicacion/node_modules/
+
+#Next.js build
+Aplicacion/.next/
+
+#Variable globales
+Aplicacion/.env*
+BD-PostgreSQL/.env*

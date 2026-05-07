@@ -87,6 +87,13 @@ export class SaleService {
         return sale
     }
 
+    async getTopProducts(storeId: string, limit: number = 5) {
+        return this.repo.findTopProducts(storeId, limit)
+    }
+    
+    async getTotalSales(storeId: string, startDate: Date, endDate: Date) {
+        return this.repo.getTotalSales(storeId, startDate, endDate)
+    }
+    
 }
-
 

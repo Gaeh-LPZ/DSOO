@@ -4,6 +4,7 @@ import { SaleRepository } from "./infrastructure/sale.repository"
 import { StockRepository } from "@/modules/product/infrastructure/stock.repository"
 import { ProductRepository } from "@/modules/product/infrastructure/product.repository"
 import { createSaleSchema, paySaleSchema, getSaleSchema } from "./sale.schema"
+import { getTopProductsSchema, getTotalSalesSchema } from "./sale.schema"
 import { requireRole } from "@/share/auth"
 
 const saleRepo = new SaleRepository()
@@ -55,5 +56,14 @@ export async function getSaleWithItemsAction(saleId: string) {
         }
     } catch (error: any) {
         return { success: false, message: error.message }
-    }
+    }}
+
+export async function getTopProductsAction(data: any) {
+    const parsed = getTopProductsSchema.parse(data)
+    return saleService.getTopProducts(parsed.storeId, parsed.limit)
+}
+
+export async function getTotalSalesAction(data: any) {
+    const parsed = getTotalSalesSchema.parse(data)
+    return saleService.getTotalSales(parsed.storeId, parsed.startDate, parsed.endDate)
 }

@@ -119,7 +119,6 @@ export class SaleRepository {
                     payments: {
                         create: {
                             id: payment.id,
-                            saleId: saleId,
                             amount: payment.amount,
                             method: payment.method
                         }
@@ -150,7 +149,7 @@ export class SaleRepository {
         return this.toDomain(data);
     }
 
-    async findTopProducts(storeId: string, limit: number = 10) {
+    async findTopProducts(storeId: string, limit: number = 5) {
         const result = await prisma.saleItem.groupBy({
             by: ['productId'],
             where: {
@@ -169,7 +168,23 @@ export class SaleRepository {
             },
             take: limit
         })
-        return result
+    
+        // Traer nombre de cada producto
+        const withNames = await Promise.all(
+            result.map(async (item) => {
+                const product = await prisma.product.findUnique({
+                    where: { id: item.productId },
+                    select: { name: true }
+                })
+                return {
+                    productId: item.productId,
+                    name: product?.name ?? item.productId,
+                    quantity: item._sum.quantity ?? 0
+                }
+            })
+        )
+    
+        return withNames
     }
 
     async getTotalSales(storeId: string, startDate: Date, endDate: Date) {
