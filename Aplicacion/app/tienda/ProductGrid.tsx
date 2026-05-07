@@ -1,5 +1,6 @@
 "use client"
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 interface Product {
     id: string;
@@ -56,6 +57,7 @@ const categoryHero: Record<string, { title: string; subtitle: string; from: stri
 export default function ProductGrid({ productos }: Props) {
     const [hover, setHover] = useState<string | null>(null);
     const [categoriaActiva, setCategoriaActiva] = useState("todos");
+    const router = useRouter();
 
     const productosFiltrados = categoriaActiva === "todos"
         ? productos
@@ -125,8 +127,13 @@ export default function ProductGrid({ productos }: Props) {
                                             <span className="material-symbols-outlined text-6xl text-slate-300">image</span>
                                         </div>
                                     )}
-                                    <div className={`absolute bottom-0 left-0 right-0 text-white text-xs uppercase tracking-widest py-3 text-center transition-transform duration-300 ${hover === producto.id ? "translate-y-0" : "translate-y-full"}`}
-                                        style={{ backgroundColor: "rgba(15,23,42,0.9)" }}>
+                                    <div
+                                        onClick={() => router.push(`/carrito?id=${producto.id}`)}
+                                        className={`absolute bottom-0 left-0 right-0 text-white text-xs uppercase tracking-widest py-3 text-center transition-transform duration-300 cursor-pointer ${
+                                            hover === producto.id ? "translate-y-0" : "translate-y-full"
+                                        }`}
+                                        style={{ backgroundColor: "rgba(15,23,42,0.9)" }}
+                                    >
                                         Agregar al carrito
                                     </div>
                                 </div>

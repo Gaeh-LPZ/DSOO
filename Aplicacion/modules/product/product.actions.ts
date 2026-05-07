@@ -2,7 +2,7 @@
 import { requireRole } from "@/share/auth"
 import { ProductService } from "./application/product.service"
 import { ProductRepository } from "./infrastructure/product.repository"
-import { createProductSchema, updateProductSchema, deactivateProductSchema, listProductsSchema } from "./product.schema"
+import { createProductSchema, updateProductSchema, deactivateProductSchema, listProductsSchema, getProductByIdSchema } from "./product.schema"
 
 const productRepo = new ProductRepository()
 const productService = new ProductService(productRepo)
@@ -27,22 +27,20 @@ export async function deactivateProductAction(data: any) {
 
 export async function listProductsAction(data: any) {
     const parsed = listProductsSchema.parse(data)
-    return productService.listProducts(parsed.cantidad)
+    const products = await productService.listProducts(parsed.cantidad)
+    
+    return products.map(p => ({
+        id: p.id,
+        name: p.name,
+        sku: p.sku,
+        price: p.price,
+        cost: p.cost,
+        isActive: p.isActive,
+        imageUrl: p.imageUrl
+    }))
 }
-export async function getPublicProductsAction() {
-    try {
-        const productos = await productRepo.findAll()
-        return {
-            success: true,
-            data: productos.filter(p => p.getIsActive()).map(p => ({
-                id: p.id,
-                name: p.getName(),
-                sku: p.getSku(),
-                price: p.getPrice(),
-                imageUrl: p.imageUrl
-            }))
-        }
-    } catch (error: any) {
-        return { success: false, message: error.message }
-    }
+
+export async function getProductByIdAction(data: any) {
+    const parsed = getProductByIdSchema.parse(data)
+    return await productService.getProductById(parsed.id);
 }

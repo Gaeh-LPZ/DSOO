@@ -2,10 +2,10 @@ import { Product } from "../domain/Product";
 import { ProductRepository } from "../infrastructure/product.repository";
 
 export class ProductService {
-    constructor(private repo: ProductRepository) {}
+    constructor(private repo: ProductRepository) { }
 
     // Caso de Uso: Crear Producto
-    async createProduct(data: {name: string; sku: string; price: number; cost: number; imageUrl?: string; }): Promise<Product> {
+    async createProduct(data: { name: string; sku: string; price: number; cost: number; imageUrl?: string; }): Promise<Product> {
 
         const existing = await this.repo.findBySKU(data.sku);               // Busca por SKU (unico)
         if (existing) throw new Error("El SKU ya existe");
@@ -24,7 +24,7 @@ export class ProductService {
     }
 
     // Caso de uso: Actualizar Producto
-    async updateProduct( id: string, data: { name?: string; price?: number; cost?: number; imageUrl?:string }): Promise<Product> {
+    async updateProduct(id: string, data: { name?: string; price?: number; cost?: number; imageUrl?: string }): Promise<Product> {
 
         const product = await this.repo.findById(id);                       // Busca producto por ID
         if (!product) throw new Error("Producto no encontrado");            // No encuentra sale alerta
@@ -41,13 +41,21 @@ export class ProductService {
         const product = await this.repo.findById(id);                       // Trae el producto por ID
         if (!product) throw new Error("Producto no encontrado");
 
-        product.desactive();    
+        product.desactive();
 
         return this.repo.update(product);                                   // Actualiza el isActive con false
     }
 
     // Caso de uso: Lista de Prodcutos (Implicito)
     async listProducts(cantidad: number): Promise<Product[]> {              // Trae lista de producto depende de cantidad
-        return this.repo.findAll(cantidad);
+        const products = await this.repo.findAll(cantidad)
+        return products.filter(p => p.isActive)
+    }
+
+    async getProductById(id: string):Promise<Product> {
+        const product = await this.repo.findById(id);                       // Trae el producto por ID
+        if (!product) throw new Error("Producto no encontrado");
+
+        return product
     }
 }

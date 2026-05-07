@@ -30,22 +30,22 @@ export class ProductRepository {
     }
 
     // Metodo busca por ID
-    async findById(id: string): Promise<Product | null> {
+    async findById(id: string): Promise<IProduct | null> {
         const data = await prisma.product.findUnique({
             where: { id }
         });
 
         if (!data) return null;
 
-        return new Product(
-            data.id,
-            data.name,
-            data.sku,
-            data.price,
-            data.cost,
-            data.isActive,
-            data.imageUrl
-        );
+        return {
+            id: data.id,
+            name: data.name,
+            sku: data.sku,
+            price: data.price,
+            cost: data.cost,
+            isActive: data.isActive,
+            imageUrl: data.imageUrl,
+        };
     }
 
     // Metodo para crear Producto
@@ -54,7 +54,7 @@ export class ProductRepository {
             data: {
                 id: product.id,
                 name: product.getName(),                    // Llamada a los metodos de la clase padre (Productos)
-                sku: product.getSku(),                  
+                sku: product.getSku(),
                 price: product.getPrice(),
                 cost: product.getCost(),
                 isActive: product.getIsActive(),

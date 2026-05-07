@@ -6,6 +6,7 @@ import { cookies } from "next/headers";
 import { HashService } from "@/infrastructure/security/has.service";
 import { JwtService } from "@/infrastructure/security/jwt.service";
 import { revalidatePath } from "next/cache";
+import { getSession } from "@/share/auth";
 
 const customerRepo = new CustomerRepository();
 const hashService = new HashService();
@@ -42,13 +43,12 @@ export async function loginCustomerAction(data: any) {
 
 export async function updateCustomerAction(formData: any) {
     try {
-        const token = (await cookies()).get("token")?.value;
-        if (!token) return { success: false, message: "No autorizado." };
+        const session = await getSession();
+        if (!session) return { success: false, message: "No autorizado." };
 
-        const payload = await jwtService.verify(token) as { userId: string };
         const parsed = updateCustomerSchema.parse(formData);
 
-        await customerService.updateCustomer(payload.userId, parsed);
+        await customerService.updateCustomer(session.userId, parsed);
 
         revalidatePath("/perfil");
         return { success: true, message: "Perfil actualizado." };
@@ -58,13 +58,11 @@ export async function updateCustomerAction(formData: any) {
 }
 
 export async function getCustomerProfileAction() {
-    const cookieStore = await cookies();
-    const token = cookieStore.get("token")?.value;
-    if (!token) return { error: "No autorizado" };
+    const session = await getSession();
+    if (!session) return { error: "No autorizado" };
 
     try {
-        const payload = await jwtService.verify(token) as { userId: string };
-        const data = await customerService.getProfile(payload.userId);
+        const data = await customerService.getProfile(session.userId);
         return { success: true, data };
     } catch (e) {
         return { error: "Error al obtener perfil" };

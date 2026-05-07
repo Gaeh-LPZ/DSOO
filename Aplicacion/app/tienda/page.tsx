@@ -1,13 +1,12 @@
-import { getPublicProductsAction } from "@/modules/product/product.actions";
+import { listProductsAction } from "@/modules/product/product.actions";
 import ProductGrid from "./ProductGrid";
 
 export default async function TiendaPage() {
-    const result = await getPublicProductsAction();
-    const productos = result.success ? result.data ?? [] : [];
-
+    const result = await listProductsAction({cantidad: 10});
+    
     return (
         <main style={{ backgroundColor: "#fafaf5" }} className="min-h-screen">
-            <ProductGrid productos={productos} />
+            <ProductGrid productos={result} />
         </main>
     );
 }
