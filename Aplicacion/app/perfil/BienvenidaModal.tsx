@@ -139,7 +139,7 @@ export default function WelcomeModal({ nombre, puntosReales, onFinish }: Welcome
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       {/* Contenedor*/}
-      <div className="rounded-[2rem] p-8 max-w-sm w-full text-center shadow-2xl border-4 border-[#e6d5b8]"
+      <div className="rounded-4xl p-8 max-w-sm w-full text-center shadow-2xl border-4 border-[#e6d5b8]"
         style={{ background: "#FDFBF7" }}>
 
         <p className="text-[10px] font-bold tracking-[0.3em] uppercase mb-1 text-[#8a7055]">

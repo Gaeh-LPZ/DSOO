@@ -150,6 +150,7 @@ model Product {
   id        String   @id @default(uuid())
   name      String
   sku       String   @unique
+  category  String   @default("General")
   price     Float
   cost      Float
   imageUrl     String?

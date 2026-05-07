@@ -1,12 +1,14 @@
-import { z } from "zod"
+import { z } from "zod";
 
 export const getTopProductsSchema = z.object({
-    storeId: z.string().uuid(),
-    limit: z.number().int().positive().default(10)
-})
+  // Quitamos .uuid() para que acepte "store-central"
+  storeId: z.string().min(1), 
+  limit: z.number().optional(),
+});
 
 export const getTotalSalesSchema = z.object({
-    storeId: z.string().uuid(),
-    startDate: z.coerce.date(),
-    endDate: z.coerce.date()
-})
+  // Quitamos .uuid() para que acepte "store-central"
+  storeId: z.string().min(1), 
+  startDate: z.date(),
+  endDate: z.date(),
+});
