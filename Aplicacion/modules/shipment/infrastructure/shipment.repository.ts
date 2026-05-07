@@ -49,4 +49,19 @@ export class ShipmentRepository {
 
         return this.toDomain(data)
     }
+	async findAll(): Promise<Shipment[]> {
+	    const data = await prisma.shipment.findMany({
+	        orderBy: { sale: { createdAt: 'desc' } },
+	        include: { sale: true }
+	    })
+	    return data.map((d: any) => this.toDomain(d))
+	}
+
+	async findBySaleId(saleId: string): Promise<Shipment | null> {
+	    const data = await prisma.shipment.findUnique({
+	        where: { saleId }
+	    })
+	    if (!data) return null
+	    return this.toDomain(data)
+	}
 }

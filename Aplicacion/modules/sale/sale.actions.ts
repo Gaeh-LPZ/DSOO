@@ -27,3 +27,33 @@ export async function getSaleAction(data: any) {
     const parsed = getSaleSchema.parse(data)
     return saleService.findById(parsed.saleId)
 }
+export async function getSalesByCustomerAction(customerId: string) {
+    try {
+        const ventas = await saleRepo.findByCustomerId(customerId)
+        return { success: true, data: ventas }
+    } catch (error: any) {
+        return { success: false, message: error.message }
+    }
+}
+export async function getSaleWithItemsAction(saleId: string) {
+    try {
+        const venta = await saleRepo.findById(saleId)
+        if (!venta) return { success: false, message: "Venta no encontrada" }
+        return {
+            success: true,
+            data: {
+                id: venta.id,
+                status: venta.getStatus(),
+                total: venta.getTotal(),
+                items: venta.getItems().map(i => ({
+                    productId: i.getProductId(),
+                    quantity: i.getQuantity(),
+                    price: i.getPrice(),
+                    subtotal: i.getSubtotal()
+                }))
+            }
+        }
+    } catch (error: any) {
+        return { success: false, message: error.message }
+    }
+}

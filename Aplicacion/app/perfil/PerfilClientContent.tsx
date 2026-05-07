@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import PerfilForm from "./PerfilForm";
 import { CloseLoginAction } from "@/share/closeSession";
 import WelcomeModal from "./BienvenidaModal";
+import EnvioTab from "./EnvioTab";
 
 type TabType = "datos" | "pedidos" | "direcciones" | "pagos" | "seguridad";
 
@@ -26,19 +27,15 @@ export default function PerfilClientContent({ userData }: Props) {
 
     useEffect(() => {
         const yaVio = localStorage.getItem("bienvenidaMostrada");
-
         if (!yaVio) {
             setPuntos(0);
-
             const t = setTimeout(() => {
                 setMostrarModal(true);
             }, 1500);
-
             return () => clearTimeout(t);
         }
         setPuntos(userData.puntos);
     }, []);
-
 
     const getTabClass = (tabName: TabType) => {
         return `flex items-center gap-3 px-4 py-3 rounded-lg transition-colors cursor-pointer w-full text-left ${activeTab === tabName
@@ -94,7 +91,7 @@ export default function PerfilClientContent({ userData }: Props) {
                         <span className="material-symbols-outlined">badge</span> Mis Datos
                     </button>
                     <button onClick={() => setActiveTab("pedidos")} className={getTabClass("pedidos")}>
-                        <span className="material-symbols-outlined">local_mall</span> Historial
+                        <span className="material-symbols-outlined">local_shipping</span> Mis Envíos
                     </button>
                     <button onClick={() => setActiveTab("direcciones")} className={getTabClass("direcciones")}>
                         <span className="material-symbols-outlined">location_on</span> Direcciones
@@ -118,8 +115,9 @@ export default function PerfilClientContent({ userData }: Props) {
             {/* CONTENIDO PRINCIPAL */}
             <section className="flex-1 bg-white p-8 rounded-2xl shadow-sm border border-slate-100 min-h-[600px]">
                 {activeTab === "datos" && <PerfilForm initialData={userData} />}
+                {activeTab === "pedidos" && <EnvioTab saleIds={[]} />}
 
-                {activeTab !== "datos" && (
+                {activeTab !== "datos" && activeTab !== "pedidos" && (
                     <div className="text-center py-20 text-slate-400">
                         <p>Contenido de {activeTab} en desarrollo...</p>
                     </div>

@@ -188,4 +188,12 @@ export class SaleRepository {
         })
         return result._sum.total ?? 0
     }
+    async findByCustomerId(customerId: string): Promise<Sale[]> {
+        const data = await prisma.sale.findMany({
+            where: { customerId },
+            include: { items: true, payments: true },
+            orderBy: { createdAt: 'desc' }
+        })
+        return data.map((d: any) => this.toDomain(d))
+    }
 }

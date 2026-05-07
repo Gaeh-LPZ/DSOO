@@ -29,3 +29,20 @@ export async function listProductsAction(data: any) {
     const parsed = listProductsSchema.parse(data)
     return productService.listProducts(parsed.cantidad)
 }
+export async function getPublicProductsAction() {
+    try {
+        const productos = await productRepo.findAll()
+        return {
+            success: true,
+            data: productos.filter(p => p.getIsActive()).map(p => ({
+                id: p.id,
+                name: p.getName(),
+                sku: p.getSku(),
+                price: p.getPrice(),
+                imageUrl: p.imageUrl
+            }))
+        }
+    } catch (error: any) {
+        return { success: false, message: error.message }
+    }
+}
