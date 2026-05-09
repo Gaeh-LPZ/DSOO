@@ -47,10 +47,8 @@ export async function CarByCustomerId(data: any){
     return cartService.cartCustomerId(session.userId);
 }
 
-export async function clearCartAction(data: any) {
+export async function clearCartAction() {
     const session = await getSession()
     if (!session) throw new Error("No autorizado")
-
-    const parsed = clearCartSchema.parse(data)
-    return cartRepo.clearCart(parsed.cartId)
+    return cartService.clearCart(session.userId)
 }

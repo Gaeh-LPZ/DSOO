@@ -8,11 +8,19 @@ import { getTopProductsSchema, getTotalSalesSchema } from "./sale.schema"
 import { getSession, requireRole } from "@/share/auth"
 import { CarByCustomerId, clearCartAction } from "../carrito/carrito.actions"
 import { getSystemUserIdAction } from "../user/user.actions"
+import { CustomerService } from "../customer/application/customer.service"
+import { CustomerRepository } from "../customer/infrastructure/customer.repository"
+import { HashService } from "@/infrastructure/security/has.service"
+import { JwtService } from "@/infrastructure/security/jwt.service"
 
 const saleRepo = new SaleRepository()
 const stockRepo = new StockRepository()
 const productRepo = new ProductRepository()
-const saleService = new SaleService(saleRepo, stockRepo, productRepo)
+const customerRepo = new CustomerRepository()
+const hashService = new HashService()
+const jwtService = new JwtService()
+const customerService = new CustomerService(customerRepo, hashService, jwtService)
+const saleService = new SaleService(saleRepo, stockRepo, productRepo, customerService)
 
 export async function createSaleAction(data: any) {
     await requireRole("CAJERO")
@@ -23,7 +31,8 @@ export async function createSaleAction(data: any) {
 export async function paySaleAction(data: any) {
     //await requireRole("CAJERO")
     const parsed = paySaleSchema.parse(data)
-    return saleService.paySale(parsed.saleId, parsed.amount, parsed.method)
+    await saleService.paySale(parsed.saleId, parsed.amount, parsed.method)
+    return { success: true }
 }
 
 export async function getSaleAction(data: any) {
@@ -107,6 +116,6 @@ export async function createSaleFromCartAction() {
         items,
     })
 
-    await clearCartAction({ cartId: cart.id })
+    await clearCartAction() 
     return sale.id
 }

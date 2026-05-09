@@ -4,6 +4,7 @@ import { SaleItem } from "../domain/SaleItem";
 import { ProductRepository } from "@/modules/product/infrastructure/product.repository";
 import { SaleRepository } from "../infrastructure/sale.repository";
 import { Payment, PaymentMethod } from "../domain/Payment";
+import { CustomerService } from "@/modules/customer/application/customer.service";
 import Stripe from "stripe";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
@@ -22,8 +23,8 @@ export class SaleService {
     constructor(
         private repo: SaleRepository,
         private stockRepo: StockRepository,
-        private productRepo: ProductRepository
-
+        private productRepo: ProductRepository,
+        private customerService: CustomerService
     ) { }
 
     // Caso de Uso: Crear Venta
@@ -100,7 +101,21 @@ export class SaleService {
         );
 
         sale.addPayment(payment);
-        return this.repo.addPayment(saleId, payment);
+        const result = await this.repo.addPayment(saleId, payment);
+
+        const customerId = (sale as any).customerId || (sale as any).getCustomerId?.();
+
+        if (customerId) {
+            try {
+                const total = (sale as any).total || (sale as any).getTotal?.();
+                await this.customerService.addPointsFromSale(customerId, total);
+                console.log(`Puntos de lealtad aplicados exitosamente al cliente ${customerId}`);
+            } catch (error: any) {
+                console.log(`No se acumularon puntos: ${error.message}`);
+            }
+        }
+
+        return result;
     }
 
     async findById(saleId: string) {

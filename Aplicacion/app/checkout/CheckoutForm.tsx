@@ -3,10 +3,11 @@
 import { useState, useEffect } from "react";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements, PaymentElement, useStripe, useElements, } from "@stripe/react-stripe-js";
+import { paySaleAction } from "@/modules/sale/sale.actions";
 
 // Inicializa Stripe 
 const stripePromise = loadStripe(
-  process.env.STRIPE_PUBLIC_KEY!
+  process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY!
 );
 
 // Tipos
@@ -27,11 +28,12 @@ function formatMXN(amount: number): string {
 }
 
 // Componente interno: el formulario real con PaymentElement
-function StripePaymentForm({ total, onSuccess, onCancel, }: {
+function StripePaymentForm({ total, saleId, onSuccess, onCancel }: { // <--- Agregamos saleId aquí
   total: number;
+  saleId: string; // <--- Y definimos su tipo aquí
   onSuccess?: () => void;
   onCancel?: () => void;
-}) {
+}){
   const stripe = useStripe();       // Hook de Stripe — acceso a stripe.confirmPayment
   const elements = useElements();   // Hook de Stripe — acceso al PaymentElement montado
 
@@ -39,28 +41,39 @@ function StripePaymentForm({ total, onSuccess, onCancel, }: {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleSubmit = async () => {
-    // Stripe todavía no está listo (cargando el SDK)
     if (!stripe || !elements) return;
 
     setIsProcessing(true);
     setErrorMessage(null);
 
-    const { error } = await stripe.confirmPayment({
+    // Cambiamos aquí para extraer también el paymentIntent
+    const { error, paymentIntent } = await stripe.confirmPayment({
       elements,
       confirmParams: {
         return_url: `${window.location.origin}/checkout/resultado`,
       },
-      // redirect: "if_required" evita que rediriga si el pago es inmediato (tarjeta)
       redirect: "if_required",
     });
 
     if (error) {
-      // Errores de validación o de tarjeta rechazada
       setErrorMessage(error.message ?? "Ocurrió un error al procesar el pago.");
       setIsProcessing(false);
-    } else {
-      // Pago exitoso, va a /api/webhook
-      onSuccess?.();
+    } else if (paymentIntent && paymentIntent.status === "succeeded") {
+      // ✅ EL PAGO PASÓ EN STRIPE. AHORA AVISAMOS AL BACKEND:
+      try {
+        await paySaleAction({
+          saleId: saleId, // Pasamos el ID de la venta que recibimos por props
+          amount: total,  // Pasamos el total que recibimos por props
+          method: "CARD", // El método según tu Enum de Prisma
+        });
+        
+        // Si el backend responde bien, mostramos la pantalla de éxito
+        onSuccess?.();
+      } catch (backendError: any) {
+        console.error("Error al registrar pago en BD:", backendError);
+        setErrorMessage("El pago se realizó, pero hubo un error al registrarlo en el sistema.");
+        setIsProcessing(false);
+      }
     }
   };
 
@@ -426,6 +439,7 @@ export default function CheckoutForm({ saleId, total, onSuccess, onCancel, }: Ch
                 total={total}
                 onSuccess={() => setPaid(true)}
                 onCancel={onCancel}
+                saleId={saleId}
               />
             </Elements>
           )}
