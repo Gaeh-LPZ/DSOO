@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { getCartAction, addToCartAction, removeCartItemAction, updateCartItemQuantityAction, } from "@/modules/carrito/carrito.actions";
+import { createSaleFromCartAction } from "@/modules/sale/sale.actions";
 
 interface CartItem {
   id: string;
@@ -390,6 +391,10 @@ export default function CarritoForm() {
         {items.length > 0 && (
           <div className="space-y-8">
             <button
+              onClick={async () => {
+                const saleId = await createSaleFromCartAction();
+                router.push(`/checkout?saleId=${saleId}`);
+              }}
               className="w-full py-5 text-[12px] font-bold uppercase text-white transition-opacity hover:opacity-90 active:scale-[0.98]"
               style={{
                 backgroundColor: "#042419",

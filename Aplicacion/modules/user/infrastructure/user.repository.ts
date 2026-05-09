@@ -1,15 +1,9 @@
-// infrastructure/user.repository.ts
 
 import { prisma } from "@/lib/prisma";
 import { User } from "../domain/User";
 import { Role } from "../domain/Roles";
 import { Permission } from "../domain/Permission";
-import {
-  IUserWithRoles,
-  IUserRoleRow,
-  IRolePermissionRow,
-  IRoleWithPermissions,
-} from "../interfaces/types";
+import { IUserWithRoles, IUserRoleRow, IRolePermissionRow, IRoleWithPermissions,} from "../interfaces/types";
 
 export class UserRepository {
 
@@ -29,7 +23,6 @@ export class UserRepository {
   } as const;
 
   // Mapeo BD → Dominio 
-
   private mapToUser(data: IUserWithRoles): User {
     return new User(
       data.id,
@@ -41,6 +34,7 @@ export class UserRepository {
         new Role(
           ur.role.id,
           ur.role.name,
+          ur.role.description ?? null,
           ur.role.permissions.map((rp: IRolePermissionRow) =>
             new Permission(rp.permission.id, rp.permission.name)
           )
@@ -54,6 +48,7 @@ export class UserRepository {
     return new Role(
       data.id,
       data.name,
+      data.description ?? null,
       data.permissions.map((rp: IRolePermissionRow) =>
         new Permission(rp.permission.id, rp.permission.name)
       )
@@ -61,15 +56,24 @@ export class UserRepository {
   }
 
   // Metodo pa crear funcion en la BD
-  async create(user: User): Promise<void> {
-    const data = await prisma.user.create({
+  async create(user: User, roleName: string): Promise<void> {
+    const role = await prisma.role.findUnique({
+      where: { name: roleName }
+    });
+
+    if (!role) throw new Error(`El rol "${roleName}" no existe`);
+
+    await prisma.user.create({
       data: {
         id: user.id,
         name: user.name,
         email: user.email,
         password: user.getPassword(),
         isActive: user.isActive,
-        storeId: user.storeId
+        storeId: user.storeId,
+        roles: {
+          create: [{ roleId: role.id }],
+        },
       },
       include: this.includeRoles,
     });
@@ -172,5 +176,51 @@ export class UserRepository {
       include: this.includeRoles
     })
     return data.map(u => this.mapToUser(u as IUserWithRoles))
+  }
+
+  async findAllRoles(): Promise<Role[]> {
+    const data = await prisma.role.findMany({
+      include: {
+        permissions: {
+          include: { permission: true }
+        }
+      }
+    });
+    return data.map(r => this.mapToRole(r as IRoleWithPermissions));
+  }
+
+  async createRole(name: string, description: string, permissionNames: string[]): Promise<void> {
+    const permissions = await Promise.all(
+      permissionNames.map(name =>
+        prisma.permission.upsert({
+          where: { name },
+          update: {},
+          create: { name }
+        })
+      )
+    );
+
+    await prisma.role.create({
+      data: {
+        name,
+        description,
+        permissions: {
+          create: permissions.map(p => ({ permissionId: p.id }))
+        }
+      }
+    });
+  }
+
+  async findAllPermissions() {
+    return prisma.permission.findMany();
+  }
+
+  async findSystemUser(): Promise<string> {
+    const user = await prisma.user.findUnique({
+      where: { email: "sistema@luxury.com" },
+      select: { id: true }
+    })
+    if (!user) throw new Error("Usuario sistema no configurado")
+    return user.id
   }
 }

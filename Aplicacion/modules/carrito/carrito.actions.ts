@@ -3,7 +3,7 @@
 import { getSession } from "@/share/auth";
 import { ProductRepository } from "../product/infrastructure/product.repository";
 import { CartService } from "./application/carrito.service";
-import { addToCartSchema, removeCartItemSchema, updateCartItemQuantitySchema} from "./carrito.schema";
+import { addToCartSchema, clearCartSchema, removeCartItemSchema, updateCartItemQuantitySchema} from "./carrito.schema";
 import { CartRepository } from "./infrastructure/carrito.repository";
 
 const cartRepo = new CartRepository();
@@ -39,4 +39,18 @@ export async function updateCartItemQuantityAction(data: any) {
 
     const parsed = updateCartItemQuantitySchema.parse(data);
     return cartService.updateQuantity( session.userId, parsed.productId, parsed.quantity);
+}
+
+export async function CarByCustomerId(data: any){
+    const session = await getSession();
+    if (!session) throw new Error("No autorizado");
+    return cartService.cartCustomerId(session.userId);
+}
+
+export async function clearCartAction(data: any) {
+    const session = await getSession()
+    if (!session) throw new Error("No autorizado")
+
+    const parsed = clearCartSchema.parse(data)
+    return cartRepo.clearCart(parsed.cartId)
 }

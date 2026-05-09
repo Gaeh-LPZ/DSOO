@@ -41,7 +41,6 @@ export class CartRepository {
     }
 
     async create(customerId: string): Promise<Cart> {
-
         const data = await prisma.cart.create({
             data: {
                 customerId
@@ -56,7 +55,6 @@ export class CartRepository {
 
     async save(cart: Cart): Promise<void> {
         // borrar items y recrearlos
-
         await prisma.cartItem.deleteMany({
             where: {
                 cartId: cart.id
@@ -71,5 +69,11 @@ export class CartRepository {
                 price: item.price
             }))
         });
+    }
+
+    async clearCart(cartId: string): Promise<void> {
+        await prisma.cartItem.deleteMany({
+            where: { cartId }
+        })
     }
 }

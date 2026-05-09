@@ -1,7 +1,6 @@
 import { getAllShipmentsAction } from "@/modules/shipment/shipment.actions";
 import EnviosClientContent from "./EnviosClientContent";
 
-
 export default async function EnviosPage() {
     const result = await getAllShipmentsAction();
     const envios = result.success ? result.data ?? [] : [];

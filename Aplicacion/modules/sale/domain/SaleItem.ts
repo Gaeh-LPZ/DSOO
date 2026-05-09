@@ -3,7 +3,6 @@ export class SaleItem {
         public productId: string,
         private quantity: number,
         private price: number,
-
     ) {
         if (!productId) throw new Error("Producto inválido");
         if (quantity <= 0) throw new Error("Cantidad inválida");

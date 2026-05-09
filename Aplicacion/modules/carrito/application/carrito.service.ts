@@ -12,12 +12,12 @@ export class CartService {
         let cart = await this.cartRepository.findByCustomerId(customerId);
 
         // si no existe carrito lo crea
-        if (!cart)  cart = await this.cartRepository.create(customerId);
+        if (!cart) cart = await this.cartRepository.create(customerId);
 
         const product = await this.productRepository.findById(productId);
         if (!product) throw new Error("Producto no encontrado");
 
-        const item = new CartItem(crypto.randomUUID(), product.id, 1, product.price, { id: product.id, name: product.name, imageUrl: product.imageUrl});
+        const item = new CartItem(crypto.randomUUID(), product.id, 1, product.price, { id: product.id, name: product.name, imageUrl: product.imageUrl });
 
         cart.addItem(item);
         await this.cartRepository.save(cart);
@@ -33,8 +33,8 @@ export class CartService {
 
     async getCartDTO(customerId: string) {
         const cart = await this.cartRepository.findByCustomerId(customerId);
-        if (!cart)return null;
-        
+        if (!cart) return null;
+
         return {
             id: cart.id,
             items: cart.items.map(item => ({
@@ -60,5 +60,18 @@ export class CartService {
 
         item.quantity = quantity;
         await this.cartRepository.save(cart);
+    }
+
+    async cartCustomerId(customerId: string) {
+        const cart = await this.cartRepository.findByCustomerId(customerId);
+        if (!cart) throw new Error("Carrito no encontrado");
+        return cart
+    }
+
+    async clearCart(customerId: string): Promise<void> {
+        const cart = await this.cartRepository.findByCustomerId(customerId)
+        if (!cart) throw new Error("Carrito no encontrado")
+
+        await this.cartRepository.clearCart(cart.id)
     }
 }

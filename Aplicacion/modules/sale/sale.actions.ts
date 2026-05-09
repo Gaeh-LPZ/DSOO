@@ -5,7 +5,9 @@ import { StockRepository } from "@/modules/product/infrastructure/stock.reposito
 import { ProductRepository } from "@/modules/product/infrastructure/product.repository"
 import { createSaleSchema, paySaleSchema, getSaleSchema } from "./sale.schema"
 import { getTopProductsSchema, getTotalSalesSchema } from "./sale.schema"
-import { requireRole } from "@/share/auth"
+import { getSession, requireRole } from "@/share/auth"
+import { CarByCustomerId, clearCartAction } from "../carrito/carrito.actions"
+import { getSystemUserIdAction } from "../user/user.actions"
 
 const saleRepo = new SaleRepository()
 const stockRepo = new StockRepository()
@@ -19,15 +21,22 @@ export async function createSaleAction(data: any) {
 }
 
 export async function paySaleAction(data: any) {
-    await requireRole("CAJERO")
+    //await requireRole("CAJERO")
     const parsed = paySaleSchema.parse(data)
     return saleService.paySale(parsed.saleId, parsed.amount, parsed.method)
 }
 
 export async function getSaleAction(data: any) {
     const parsed = getSaleSchema.parse(data)
-    return saleService.findById(parsed.saleId)
+    const sale = await saleService.findById(parsed.saleId)
+
+    return {
+        id: sale.id,
+        status: sale.getStatus(),
+        total: sale.getTotal(),
+    }
 }
+
 export async function getSalesByCustomerAction(customerId: string) {
     try {
         const ventas = await saleRepo.findByCustomerId(customerId)
@@ -36,6 +45,7 @@ export async function getSalesByCustomerAction(customerId: string) {
         return { success: false, message: error.message }
     }
 }
+
 export async function getSaleWithItemsAction(saleId: string) {
     try {
         const venta = await saleRepo.findById(saleId)
@@ -56,7 +66,8 @@ export async function getSaleWithItemsAction(saleId: string) {
         }
     } catch (error: any) {
         return { success: false, message: error.message }
-    }}
+    }
+}
 
 export async function getTopProductsAction(data: any) {
     const parsed = getTopProductsSchema.parse(data)
@@ -66,4 +77,36 @@ export async function getTopProductsAction(data: any) {
 export async function getTotalSalesAction(data: any) {
     const parsed = getTotalSalesSchema.parse(data)
     return saleService.getTotalSales(parsed.storeId, parsed.startDate, parsed.endDate)
+}
+
+export async function createStripePaymentIntentAction(data: any) {
+    const parsed = getSaleSchema.parse(data)
+    return saleService.createStripePaymentIntent(parsed.saleId)
+}
+
+export async function createSaleFromCartAction() {
+    const session = await getSession()
+    if (!session) throw new Error("No autorizado")
+
+    const cart = await CarByCustomerId(session.userId)
+    if (!cart || cart.items.length === 0) {
+        throw new Error("El carrito está vacío")
+    }
+
+    const systemUserId = await getSystemUserIdAction()  // Ventas Online
+
+    const items = cart.items.map((item: any) => ({
+        productId: item.productId,
+        quantity: item.quantity,
+    }))
+
+    const sale = await saleService.createSale({
+        userId: systemUserId,
+        storeId: process.env.STORE_ONLINE_ID!,
+        customerId: session.userId,
+        items,
+    })
+
+    await clearCartAction({ cartId: cart.id })
+    return sale.id
 }

@@ -35,3 +35,29 @@ export async function listUsersAction() {
     return userService.listUsers()
 }
 
+export async function getRolesAction() {
+    await requireRole(["ADMIN"])
+    const roles = await userService.getRoles();
+
+    return roles.map(r => ({
+        id: r.id,
+        name: r.name,
+        description: r.description ?? "Sin descripción",
+        permission: r.permission.map((p: any) => p.name),
+    }));
+}
+
+export async function createRoleAction(data: { name: string; description: string; permissions: string[] }) {
+    await requireRole(["ADMIN"])
+    return userService.createRole(data);
+}
+
+export async function getPermissionsAction() {
+    await requireRole(["ADMIN"])
+    const perms = await userService.getPermissions();
+    return perms.map(p => ({ id: p.id, name: p.name }));
+}
+
+export async function getSystemUserIdAction(): Promise<string> {
+    return userService.getSystemUserId()
+}

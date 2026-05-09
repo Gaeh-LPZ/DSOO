@@ -16,6 +16,7 @@ export class CloudinaryService {
                 {
                     folder: folder,
                     resource_type: 'image',
+                    timeout: 60000,
                     transformation: [
                         { width: 800, height: 800, crop: 'limit' },  // Limita tamaño máximo
                         { quality: 'auto' }  // Optimización automática

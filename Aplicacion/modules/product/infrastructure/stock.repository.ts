@@ -46,7 +46,7 @@ export class StockRepository {
     // Metodo que actualiza el stock
     async update(stock: Stock): Promise<Stock> {
         const data = await prisma.stock.update({
-            where: {id: stock.id},
+            where: { id: stock.id },
             data: {
                 productId: stock.getProductId(),                    // Llamada a los metodos de la clase padre (Stock)
                 storeId: stock.getStoreId(),
@@ -54,7 +54,7 @@ export class StockRepository {
                 minQuantity: stock.getMinQuantity()
             }
         })
-        
+
         return new Stock(
             data.id,
             data.productId,
@@ -67,16 +67,16 @@ export class StockRepository {
     // Metodo que decrementa Stock Checando el historial de movimeintos
     async decreaseStockWithMovement(productId: string, storeId: string, cantidad: number) {
         return prisma.$transaction(async (tx: {                     // Tipado del tipo
-                stock: {
-                    findUnique: (arg0: { // tx asegura que todo este en la misma transacción
-                        where: { productId_storeId: { productId: string; storeId: string; }; };
-                    }) => any; update: (arg0: { where: { id: string; }; data: { quantity: number; }; }) => any;
-                }; stockMovement: {
-                    create: (arg0: { // Registra movimiento
-                        data: { productId: string; storeId: string; quantity: number; type: string; };
-                    }) => any;
-                };
-            }) => {
+            stock: {
+                findUnique: (arg0: { // tx asegura que todo este en la misma transacción
+                    where: { productId_storeId: { productId: string; storeId: string; }; };
+                }) => any; update: (arg0: { where: { id: string; }; data: { quantity: number; }; }) => any;
+            }; stockMovement: {
+                create: (arg0: { // Registra movimiento
+                    data: { productId: string; storeId: string; quantity: number; type: string; };
+                }) => any;
+            };
+        }) => {
 
             const stockData = await tx.stock.findUnique({           // tx asegura que todo este en la misma transacción
                 where: {
@@ -112,5 +112,11 @@ export class StockRepository {
 
             return updatedStock;
         });
+    }
+
+    async findAllStores(): Promise<{ id: string; name: string }[]> {
+        return prisma.store.findMany({
+            select: { id: true, name: true }
+        })
     }
 }

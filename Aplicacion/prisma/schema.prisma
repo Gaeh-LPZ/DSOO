@@ -144,6 +144,7 @@ model Store {
   stockMovements StockMovement[]
   purchaseOrders PurchaseOrder[]
   notifications Notification[]
+  sales          Sale[]  
 }
 
 model Product {
@@ -261,6 +262,7 @@ model Sale {
   createdAt  DateTime @default(now())
 
   user     User      @relation(fields: [userId], references: [id])
+  store    Store     @relation(fields: [storeId], references: [id])
   customer Customer? @relation(fields: [customerId], references: [id])
 
   items     SaleItem[]
@@ -286,6 +288,7 @@ model Payment {
   saleId  String
   amount  Float
   method  PaymentMethod
+  stripePaymentId String? 
 
   sale Sale @relation(fields: [saleId], references: [id])
 }

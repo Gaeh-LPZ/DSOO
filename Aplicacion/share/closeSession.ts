@@ -1,5 +1,6 @@
 "use server"
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
 export async function CloseLoginAction() {
     // Al cerrar sesión
@@ -9,5 +10,6 @@ export async function CloseLoginAction() {
         maxAge: 0, 
         path: "/"   
     });
+      redirect("/tienda")
 }
 

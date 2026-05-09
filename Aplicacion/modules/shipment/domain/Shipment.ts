@@ -12,7 +12,7 @@ export class Shipment {
         public tracking: string | null = null
     ) { }
 
-    getStatus(): string {
+    getStatus(): ShipmentStatus {
         return this.status
     }
 

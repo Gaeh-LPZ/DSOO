@@ -29,7 +29,6 @@ export class ShipmentService {
 
         envio.deliver()
         return this.repo.deliver(envio)
-
     }
 
     async getShipment(shipmentId: string): Promise<Shipment> {
@@ -37,6 +36,13 @@ export class ShipmentService {
         if (!envio) throw new Error("Envio no existente")
 
         return envio
+    }
 
+    async getAllShipments() {
+        return this.repo.findAll();
+    }
+
+    async getShipmentBySaleId(saleId: string) {
+        return this.repo.findBySaleId(saleId);
     }
 }

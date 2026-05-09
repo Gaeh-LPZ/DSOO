@@ -8,3 +8,8 @@ export const createStoreSchema = z.object({
 export const getStoreSchema = z.object({
     id: z.string().uuid(),
 })
+
+export const getStoreReportSchema = z.object({
+    startDate: z.coerce.date(),  // coerce convierte string "2024-01-01" a Date
+    endDate:   z.coerce.date(),
+})

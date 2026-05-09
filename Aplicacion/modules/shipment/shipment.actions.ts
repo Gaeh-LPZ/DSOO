@@ -6,6 +6,15 @@ import { createShipmentSchema, deliverShipmentSchema, dispatchShipmentSchema } f
 const shipmentRepo = new ShipmentRepository();
 const shipmentService = new ShipmentService(shipmentRepo);
 
+function toPlain(e: { id: string; saleId: string; status: string; tracking: string | null }) {
+    return {
+        id: e.id,
+        saleId: e.saleId,
+        status: e.status,
+        tracking: e.tracking ?? null,
+    };
+}
+
 export async function createShipmentAction(data: any) {
     const parsed = createShipmentSchema.parse(data);
     return shipmentService.createShipment(parsed.saleId);
@@ -34,15 +43,7 @@ export async function deliverShipmentAction(data: any) {
 export async function getShipmentByIdAction(shipmentId: string) {
     try {
         const envio = await shipmentService.getShipment(shipmentId);
-        return {
-            success: true,
-            data: {
-                id: envio.id,
-                saleId: envio.saleId,
-                status: envio.status,
-                tracking: envio.tracking ?? null,
-            },
-        };
+        return { success: true, data: toPlain(envio) };
     } catch (error: any) {
         return { success: false, message: error.message };
     }
@@ -50,14 +51,8 @@ export async function getShipmentByIdAction(shipmentId: string) {
 
 export async function getAllShipmentsAction() {
     try {
-        const envios = await shipmentRepo.findAll();
-        const plain = envios.map(e => ({
-            id: e.id,
-            saleId: e.saleId,
-            status: e.status,
-            tracking: e.tracking ?? null,
-        }));
-        return { success: true, data: plain };
+        const envios = await shipmentService.getAllShipments();
+        return { success: true, data: envios.map(toPlain) };
     } catch (error: any) {
         return { success: false, message: error.message };
     }
@@ -65,17 +60,8 @@ export async function getAllShipmentsAction() {
 
 export async function getShipmentBySaleIdAction(saleId: string) {
     try {
-        const envio = await shipmentRepo.findBySaleId(saleId);
-        if (!envio) return { success: true, data: null };
-        return {
-            success: true,
-            data: {
-                id: envio.id,
-                saleId: envio.saleId,
-                status: envio.status,
-                tracking: envio.tracking ?? null,
-            },
-        };
+        const envio = await shipmentService.getShipmentBySaleId(saleId);
+        return { success: true, data: envio ? toPlain(envio) : null };
     } catch (error: any) {
         return { success: false, message: error.message };
     }

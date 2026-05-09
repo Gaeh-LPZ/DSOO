@@ -168,7 +168,7 @@ export class SaleRepository {
             },
             take: limit
         })
-    
+
         // Traer nombre de cada producto
         const withNames = await Promise.all(
             result.map(async (item) => {
@@ -183,7 +183,7 @@ export class SaleRepository {
                 }
             })
         )
-    
+
         return withNames
     }
 
@@ -203,6 +203,7 @@ export class SaleRepository {
         })
         return result._sum.total ?? 0
     }
+    
     async findByCustomerId(customerId: string): Promise<Sale[]> {
         const data = await prisma.sale.findMany({
             where: { customerId },

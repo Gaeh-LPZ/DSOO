@@ -10,32 +10,37 @@ const cloudinary = new CloudinaryService()
 
 async function uploadProductImage(filename: string): Promise<string> {
   const imagePath = path.join(__dirname, 'seed-images', filename)
-  
-  // Pequeña validación por si no encuentra la imagen local
-  if (!fs.existsSync(imagePath)) return 'https://via.placeholder.com/300'
-  
+  if (!fs.existsSync(imagePath)) {
+    console.warn(`No se encontró ${filename}`)
+    return 'https://imgs.search.brave.com/s_6tLSl8b33W2r9t9OxuIWc28VzRLB-mqGy3wYRIi8E/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9pLnBp/bmltZy5jb20vb3Jp/Z2luYWxzLzcyLzA4/L2RjLzcyMDhkYzRm/YjdiN2MzMTJhZTc2/MGQ1NjA4MzllNmM2/LmpwZw'
+  }
+
   const buffer = fs.readFileSync(imagePath)
 
-  try {
-    const url = await Promise.race([
-      cloudinary.uploadImage(buffer, 'products'),
-      new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Timeout manual')), 10000)
-      )
-    ])
+  // Reintentos — si falla intenta hasta 3 veces antes de rendirse
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      console.log(`Subiendo ${filename} (intento ${attempt}/3)...`)
+      const url = await cloudinary.uploadImage(buffer, 'products')
+      console.log(`${filename} subido`)
+      return url
+    } catch (error: any) {
+      console.error(` Intento ${attempt} fallido para ${filename}:`, error.message)
 
-    console.log(`${filename} subido`)
-    return url as string
-  } catch (error) {
-    console.error(`Error subiendo ${filename}:`, error)
-    return 'https://via.placeholder.com/300'
+      if (attempt < 3) {
+        // Espera 2 segundos antes de reintentar
+        await new Promise(resolve => setTimeout(resolve, 2000))
+      }
+    }
   }
+
+  console.warn(`⚠️  ${filename} falló 3 veces, usando placeholder`)
+  return 'https://imgs.search.brave.com/s_6tLSl8b33W2r9t9OxuIWc28VzRLB-mqGy3wYRIi8E/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9pLnBp/bmltZy5jb20vb3Jp/Z2luYWxzLzcyLzA4/L2RjLzcyMDhkYzRm/YjdiN2MzMTJhZTc2/MGQ1NjA4MzllNmM2/LmpwZw'
 }
 
 async function main() {
   console.log('Iniciando seed completo con analítica...')
 
-  // Permissions 
   const permissions = await Promise.all([
     prisma.permission.upsert({ where: { name: 'sales:read' }, update: {}, create: { name: 'sales:read' } }),
     prisma.permission.upsert({ where: { name: 'sales:write' }, update: {}, create: { name: 'sales:write' } }),
@@ -46,7 +51,6 @@ async function main() {
   ])
   console.log('Permisos creados')
 
-  // Roles 
   const adminRole = await prisma.role.upsert({
     where: { name: 'ADMIN' },
     update: {},
@@ -63,12 +67,17 @@ async function main() {
     create: {
       name: 'CAJERO',
       description: 'Puede registrar ventas',
-      permissions: { create: [ { permissionId: permissions[0].id }, { permissionId: permissions[1].id }, { permissionId: permissions[2].id } ] }
+      permissions: {
+        create: [
+          { permissionId: permissions[0].id },
+          { permissionId: permissions[1].id },
+          { permissionId: permissions[2].id }
+        ]
+      }
     }
   })
   console.log('Roles creados')
 
-  // Users 
   const hashedPassword = await bcrypt.hash('password123', 10)
 
   const adminUser = await prisma.user.upsert({
@@ -82,9 +91,20 @@ async function main() {
     update: {},
     create: { name: 'Juan Cajero', email: 'cajero@luxury.com', password: hashedPassword, roles: { create: [{ roleId: cashierRole.id }] } }
   })
+
+  // Usuario sistema 
+  const systemUser = await prisma.user.upsert({
+    where: { email: 'sistema@luxury.com' },
+    update: {},
+    create: {
+      name: 'Sistema Online',
+      email: 'sistema@luxury.com',
+      password: hashedPassword,
+      roles: { create: [{ roleId: cashierRole.id }] }
+    }
+  })
   console.log('Usuarios creados')
 
-  // Stores 
   const storeCentral = await prisma.store.upsert({
     where: { id: 'store-central' },
     update: {},
@@ -96,67 +116,52 @@ async function main() {
     update: {},
     create: { id: 'store-norte', name: 'Sucursal Norte' }
   })
+
+  const storeOnline = await prisma.store.upsert({
+    where: { id: 'store-online' },
+    update: {},
+    create: { id: 'store-online', name: 'Tienda Online' }
+  })
   console.log('Tiendas creadas')
 
-  // Products (AHORA CON CATEGORÍAS)
   console.log('Subiendo imágenes a Cloudinary e insertando productos...')
   const laptopUrl = await uploadProductImage('laptop.jpg')
   const mouseUrl = await uploadProductImage('mouse.jpg')
   const tecladoUrl = await uploadProductImage('teclado.jpg')
   const monitorUrl = await uploadProductImage('monitor.jpg')
+  const relojUrl = await uploadProductImage('Reloj.jpg')
+  const bolsoUrl = await uploadProductImage('Bolso.jpg')
+  const cafeteraUrl = await uploadProductImage('Cafetera.jpg')
+  const lamparaUrl = await uploadProductImage('Lampara.jpg')
 
   const products = await Promise.all([
-    prisma.product.upsert({
-      where: { sku: 'PROD-001' }, update: {},
-      create: { name: 'Laptop HP 15"', sku: 'PROD-001', category: 'Electrónica', price: 12999.00, cost: 9500.00, imageUrl: laptopUrl }
-    }),
-    prisma.product.upsert({
-      where: { sku: 'PROD-002' }, update: {},
-      create: { name: 'Mouse Inalámbrico', sku: 'PROD-002', category: 'Electrónica', price: 349.00, cost: 180.00, imageUrl: mouseUrl }
-    }),
-    prisma.product.upsert({
-      where: { sku: 'PROD-003' }, update: {},
-      create: { name: 'Teclado Mecánico', sku: 'PROD-003', category: 'Electrónica', price: 899.00, cost: 500.00, imageUrl: tecladoUrl }
-    }),
-    prisma.product.upsert({
-      where: { sku: 'PROD-004' }, update: {},
-      create: { name: 'Monitor 24"', sku: 'PROD-004', category: 'Electrónica', price: 4500.00, cost: 3000.00, imageUrl: monitorUrl }
-    }),
-    prisma.product.upsert({ 
-      where: { sku: 'PROD-005' }, update: {}, 
-      create: { name: 'Reloj Suizo Automático', sku: 'PROD-005', category: 'Luxury Wear', price: 45000.00, cost: 25000.00, imageUrl: 'https://via.placeholder.com/300' } 
-    }),
-    prisma.product.upsert({ 
-      where: { sku: 'PROD-006' }, update: {}, 
-      create: { name: 'Bolso de Cuero Italiano', sku: 'PROD-006', category: 'Luxury Wear', price: 28500.00, cost: 12000.00, imageUrl: 'https://via.placeholder.com/300' } 
-    }),
-    prisma.product.upsert({ 
-      where: { sku: 'PROD-007' }, update: {}, 
-      create: { name: 'Cafetera Espresso Premium', sku: 'PROD-007', category: 'Hogar', price: 15999.00, cost: 8000.00, imageUrl: 'https://via.placeholder.com/300' } 
-    }),
-    prisma.product.upsert({ 
-      where: { sku: 'PROD-008' }, update: {}, 
-      create: { name: 'Set de Lámparas de Diseño', sku: 'PROD-008', category: 'Hogar', price: 8500.00, cost: 3500.00, imageUrl: 'https://via.placeholder.com/300' } 
-    }),
+    prisma.product.upsert({ where: { sku: 'PROD-001' }, update: {}, create: { name: 'Laptop HP 15"', sku: 'PROD-001', category: 'Electrónica', price: 12999.00, cost: 9500.00, imageUrl: laptopUrl } }),
+    prisma.product.upsert({ where: { sku: 'PROD-002' }, update: {}, create: { name: 'Mouse Inalámbrico', sku: 'PROD-002', category: 'Electrónica', price: 349.00, cost: 180.00, imageUrl: mouseUrl } }),
+    prisma.product.upsert({ where: { sku: 'PROD-003' }, update: {}, create: { name: 'Teclado Mecánico', sku: 'PROD-003', category: 'Electrónica', price: 899.00, cost: 500.00, imageUrl: tecladoUrl } }),
+    prisma.product.upsert({ where: { sku: 'PROD-004' }, update: {}, create: { name: 'Monitor 24"', sku: 'PROD-004', category: 'Electrónica', price: 4500.00, cost: 3000.00, imageUrl: monitorUrl } }),
+    prisma.product.upsert({ where: { sku: 'PROD-005' }, update: {}, create: { name: 'Reloj Suizo Automático', sku: 'PROD-005', category: 'Luxury Wear', price: 45000.00, cost: 25000.00, imageUrl: relojUrl } }),
+    prisma.product.upsert({ where: { sku: 'PROD-006' }, update: {}, create: { name: 'Bolso de Cuero Italiano', sku: 'PROD-006', category: 'Luxury Wear', price: 28500.00, cost: 12000.00, imageUrl: bolsoUrl } }),
+    prisma.product.upsert({ where: { sku: 'PROD-007' }, update: {}, create: { name: 'Cafetera Espresso Premium', sku: 'PROD-007', category: 'Hogar', price: 15999.00, cost: 8000.00, imageUrl: cafeteraUrl } }),
+    prisma.product.upsert({ where: { sku: 'PROD-008' }, update: {}, create: { name: 'Set de Lámparas de Diseño', sku: 'PROD-008', category: 'Hogar', price: 8500.00, cost: 3500.00, imageUrl: lamparaUrl } }),
   ])
-  console.log('Productos creados con categorías')
+  console.log('Productos creados')
 
-  // Stock 
   for (const product of products) {
+    // Sucursal Central
     await prisma.stock.upsert({
       where: { productId_storeId: { productId: product.id, storeId: storeCentral.id } },
       update: {},
       create: { productId: product.id, storeId: storeCentral.id, quantity: 50, minQuantity: 5 }
     })
+    // Sucursal Norte
     await prisma.stock.upsert({
       where: { productId_storeId: { productId: product.id, storeId: storeNorte.id } },
       update: {},
       create: { productId: product.id, storeId: storeNorte.id, quantity: 20, minQuantity: 3 }
     })
   }
-  console.log('Stock creado')
+  console.log('Stock creado (Central + Norte)')
 
-  // Stock Movements
   await prisma.stockMovement.createMany({
     data: [
       { productId: products[0].id, storeId: storeCentral.id, quantity: 50, type: 'IN', reason: 'Carga inicial' },
@@ -167,7 +172,6 @@ async function main() {
   })
   console.log('Movimientos de stock creados')
 
-  // Customers
   const customer1 = await prisma.customer.upsert({
     where: { id: 'customer-1' },
     update: {},
@@ -186,12 +190,41 @@ async function main() {
       loyalty: { create: { points: 50, cardNumber: 'LT-' + Math.random().toString(36).substring(2, 11).toUpperCase() } }
     }
   })
+
+  const customerOnline = await prisma.customer.upsert({
+    where: { id: 'customer-online' },
+    update: {},
+    create: {
+      id: 'customer-online',
+      name: 'Cliente Online Test',
+      email: 'test@gmail.com',
+      password: hashedPassword,
+      phone: '+52 951 000 0000',
+      loyalty: { create: { points: 0, cardNumber: 'LT-ONLINE-TEST' } }
+    }
+  })
   console.log('Clientes creados')
 
-  // Sales (Originales + Nuevas Masivas)
+  const testCart = await prisma.cart.upsert({
+    where: { id: 'cart-online-test' },
+    update: {},
+    create: {
+      id: 'cart-online-test',
+      customerId: customerOnline.id,
+      items: {
+        create: [
+          { productId: products[1].id, quantity: 2, price: products[1].price }, // 2x Mouse
+          { productId: products[2].id, quantity: 1, price: products[2].price }, // 1x Teclado
+        ]
+      }
+    }
+  })
+  console.log('Carrito de prueba creado → test@gmail.com ya tiene productos')
+
   const sale1 = await prisma.sale.create({
     data: {
-      userId: adminUser.id, storeId: storeCentral.id, customerId: customer1.id, total: 13348.00, status: SaleStatus.PAID,
+      userId: adminUser.id, storeId: storeCentral.id, customerId: customer1.id,
+      total: 13348.00, status: SaleStatus.PAID,
       items: { create: [{ productId: products[0].id, quantity: 1, price: 12999.00 }, { productId: products[1].id, quantity: 1, price: 349.00 }] },
       payments: { create: [{ amount: 13348.00, method: PaymentMethod.CARD }] },
       shipment: { create: { status: ShipmentStatus.DELIVERED, tracking: 'TRK-00123' } },
@@ -199,17 +232,19 @@ async function main() {
     }
   })
 
-  const sale2 = await prisma.sale.create({
+  await prisma.sale.create({
     data: {
-      userId: cashierUser.id, storeId: storeCentral.id, total: 899.00, status: SaleStatus.PENDING,
+      userId: cashierUser.id, storeId: storeCentral.id,
+      total: 899.00, status: SaleStatus.PENDING,
       items: { create: [{ productId: products[2].id, quantity: 1, price: 899.00 }] },
       payments: { create: [{ amount: 899.00, method: PaymentMethod.CASH }] }
     }
   })
-  
+
   await prisma.sale.create({
     data: {
-      userId: cashierUser.id, storeId: storeCentral.id, customerId: customer1.id, total: 73500.00, status: SaleStatus.PAID,
+      userId: cashierUser.id, storeId: storeCentral.id, customerId: customer1.id,
+      total: 73500.00, status: SaleStatus.PAID,
       items: { create: [{ productId: products[4].id, quantity: 1, price: 45000.00 }, { productId: products[5].id, quantity: 1, price: 28500.00 }] },
       payments: { create: [{ amount: 73500.00, method: PaymentMethod.CARD }] }
     }
@@ -217,7 +252,8 @@ async function main() {
 
   await prisma.sale.create({
     data: {
-      userId: cashierUser.id, storeId: storeCentral.id, customerId: customer2.id, total: 31998.00, status: SaleStatus.PAID,
+      userId: cashierUser.id, storeId: storeCentral.id, customerId: customer2.id,
+      total: 31998.00, status: SaleStatus.PAID,
       items: { create: [{ productId: products[6].id, quantity: 2, price: 15999.00 }] },
       payments: { create: [{ amount: 31998.00, method: PaymentMethod.CASH }] }
     }
@@ -225,7 +261,8 @@ async function main() {
 
   await prisma.sale.create({
     data: {
-      userId: cashierUser.id, storeId: storeCentral.id,customerId: customer2.id, total: 44497.00, status: SaleStatus.PAID,
+      userId: cashierUser.id, storeId: storeCentral.id, customerId: customer2.id,
+      total: 44497.00, status: SaleStatus.PAID,
       items: { create: [{ productId: products[0].id, quantity: 3, price: 12999.00 }, { productId: products[7].id, quantity: 1, price: 5500.00 }] },
       payments: { create: [{ amount: 44497.00, method: PaymentMethod.CARD }] }
     }
@@ -233,34 +270,56 @@ async function main() {
 
   await prisma.sale.create({
     data: {
-      userId: cashierUser.id, storeId: storeCentral.id, customerId: customer2.id, total: 13500.00, status: SaleStatus.PAID,
+      userId: cashierUser.id, storeId: storeCentral.id, customerId: customer2.id,
+      total: 13500.00, status: SaleStatus.PAID,
       items: { create: [{ productId: products[3].id, quantity: 3, price: 4500.00 }] },
       payments: { create: [{ amount: 13500.00, method: PaymentMethod.CARD }] }
     }
   })
-  
-  console.log('Ventas creadas')
 
-  // Return
+  await prisma.sale.create({
+    data: {
+      userId: systemUser.id,           // usuario sistema procesa la venta
+      storeId: storeCentral.id,        // tienda central tenía stock
+      customerId: customerOnline.id,
+      total: 1597.00,
+      status: SaleStatus.PAID,
+      items: { create: [{ productId: products[1].id, quantity: 1, price: 349.00 }, { productId: products[2].id, quantity: 1, price: 899.00 }, { productId: products[3].id, quantity: 0, price: 349.00 }] },
+      payments: { create: [{ amount: 1597.00, method: PaymentMethod.CARD, stripePaymentId: 'pi_test_seed_001' }] },
+      shipment: { create: { status: ShipmentStatus.IN_TRANSIT, tracking: 'TRK-ONLINE-001' } }
+    }
+  })
+  console.log('Ventas creadas (físicas + online)')
+
   await prisma.return.create({
     data: { saleId: sale1.id, approvedBy: adminUser.id, reason: 'Producto defectuoso' }
   })
   console.log('Devolución creada')
 
-  // Supplier + PurchaseOrder 
   const supplier = await prisma.supplier.upsert({
-    where: { id: 'supplier-1' }, update: {}, create: { id: 'supplier-1', name: 'Distribuidora Tech SA' }
+    where: { id: 'supplier-1' }, update: {},
+    create: { id: 'supplier-1', name: 'Distribuidora Tech SA' }
   })
 
   await prisma.purchaseOrder.create({
     data: {
       supplierId: supplier.id, storeId: storeCentral.id, status: PurchaseStatus.RECEIVED,
-      items: { create: [{ productId: products[0].id, quantity: 10, cost: 9500.00 }, { productId: products[1].id, quantity: 30, cost: 180.00 }] }
+      items: {
+        create: [
+          { productId: products[0].id, quantity: 10, cost: 9500.00 },
+          { productId: products[1].id, quantity: 30, cost: 180.00 }
+        ]
+      }
     }
   })
   console.log('Proveedor y orden de compra creados')
 
-  console.log('Seed completado exitosamente')
+  console.log('\nsSeed completado exitosamente')
+  console.log('Credenciales de prueba:')
+  console.log('  Admin:          admin@luxury.com   / password123')
+  console.log('  Cajero:         cajero@luxury.com  / password123')
+  console.log('  Cliente online: test@gmail.com    / password123')
+  console.log('  (El cliente online ya tiene productos en el carrito)')
 }
 
 main()

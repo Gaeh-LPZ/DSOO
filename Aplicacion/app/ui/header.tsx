@@ -8,7 +8,7 @@ import { usePathname } from "next/navigation";
 
 export default function Header() {
     const routes = [
-        { name: 'Tienda', href: '/' },
+        { name: 'Tienda', href: '/tienda' },
         { name: 'Categorias', href: '#' },
         { name: 'Colecciones', href: '#' },
         { name: 'About', href: '#' },

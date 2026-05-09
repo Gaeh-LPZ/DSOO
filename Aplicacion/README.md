@@ -148,3 +148,9 @@ docker exec -it <nombre_contenedor> psql -U <usuario> -d <nombre_db>
 \d tabla    -- describir una tabla
 \q          -- salir
 ```
+
+
+### Resetear BD
+```bash
+npx prisma db push --force-reset && npx prisma db seed
+```

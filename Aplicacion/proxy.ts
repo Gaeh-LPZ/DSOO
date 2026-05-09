@@ -4,7 +4,7 @@ import { JwtService } from "@/infrastructure/security/jwt.service"
 const jwtService = new JwtService()
 
 // Rutas que NO necesitan token
-const publicRoutes = ["/login", "/registro"]
+const publicRoutes = ["/login", "/registro", "/tienda", "/"]
 
 export async function proxy(request: NextRequest) {
     const path = request.nextUrl.pathname

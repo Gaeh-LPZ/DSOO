@@ -33,22 +33,14 @@ export default function RegistroForm() {
             return
         }
 
-        const isEmployee = email.endsWith("@luxury.com")
+        const resultado = await registerCustomerAction({ name, email, password, birthDate: new Date(fechaNacimiento) });
 
-        if (isEmployee) {
-            // Login Empleados
-            await registerAction({ name, email, password })
-            router.push("/login")
-
+        if (resultado.success) {
+            router.push("/login");
         } else {
-            const resultado = await registerCustomerAction({ name, email, password, birthDate: new Date(fechaNacimiento) });
-
-            if (resultado.success) {
-                router.push("/login");
-            } else {
-                setError(resultado.message || "Error al registrarse");
-            }
+            setError(resultado.message || "Error al registrarse");
         }
+        
         setLoading(false);
     }
 

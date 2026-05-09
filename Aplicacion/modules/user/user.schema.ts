@@ -5,7 +5,8 @@ export const registerSchema = z.object({
   email: z.email().endsWith("@luxury.com", {
         message: "Solo se aceptan correos @luxury.com"
     }),
-  password: z.string().min(6)
+  password: z.string().min(6),
+  role: z.string().min(1)
 });
 
 export const loginSchema = z.object({

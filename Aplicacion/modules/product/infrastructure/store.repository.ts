@@ -31,4 +31,25 @@ export class StoreRepository {
 
         return data.map((s: { id: string; name: string; }) => new Store(s.id, s.name));
     }
+
+    async getStoreReport(startDate: Date, endDate: Date) {
+        const stores = await prisma.store.findMany({
+            include: {
+                sales: {
+                    where: {
+                        createdAt: { gte: startDate, lte: endDate },
+                        status: "PAID"
+                    },
+                    include: {
+                        payments: true,
+                        returns: true,
+                        items: {
+                            include: { product: true }
+                        }
+                    }
+                }
+            }
+        })
+        return stores
+    }
 }

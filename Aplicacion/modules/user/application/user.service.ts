@@ -2,6 +2,7 @@ import { UserRepository } from "../infrastructure/user.repository";
 import { User } from "../domain/User";
 import { JwtService } from "@/infrastructure/security/jwt.service";
 import { HashService } from "@/infrastructure/security/has.service";
+import { Role } from "../domain/Roles";
 
 // NOTA: El repositorio abstrae toda la persistencia 
 
@@ -13,7 +14,7 @@ export class UserService {
   ) { }
 
   // Caso de uso: Registro de usuario
-  async register(data: { name: string; email: string; password: string; }): Promise<void> {
+  async register(data: { name: string; email: string; password: string; role: string }): Promise<void> {
     const existing = await this.repo.findByEmail(data.email);                             // Verificar que el email sea unico antes de crear
     if (existing) throw new Error("El email ya está registrado");
 
@@ -26,7 +27,7 @@ export class UserService {
       hashedPassword
     );
 
-    await this.repo.create(user);                                                        // Persiste y ya guardado en BD
+    await this.repo.create(user, data.role);                                                        // Persiste y ya guardado en BD
   }
 
   // Caso de uso: Loguear Usuario
@@ -80,5 +81,23 @@ export class UserService {
 
   async listUsers(): Promise<User[]> {
     return this.repo.findAll()
+  }
+
+  async getRoles(): Promise<Role[]> {
+    return this.repo.findAllRoles();
+  }
+
+  async createRole(data: { name: string; description: string; permissions: string[] }): Promise<void> {
+    const existing = await this.repo.findRoleById(data.name);
+    if (existing) throw new Error(`El rol "${data.name}" ya existe`);
+    await this.repo.createRole(data.name, data.description, data.permissions);
+  }
+
+  async getPermissions() {
+    return this.repo.findAllPermissions();
+  }
+
+  async getSystemUserId(): Promise<string> {
+    return this.repo.findSystemUser()
   }
 }

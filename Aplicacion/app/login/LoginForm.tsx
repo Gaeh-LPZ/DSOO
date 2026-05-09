@@ -24,10 +24,11 @@ export default function LoginForm() {
             if(isEmployee){
                 // Login Empleados
                 await loginAction({email, password})
-                router.push("/Admin")
-                
+                router.refresh()
+                router.push("/admin")  
             }else{
                 await loginCustomerAction({email, password})
+                router.refresh()
                 router.push("/perfil")
             }
         } catch (err: any) {

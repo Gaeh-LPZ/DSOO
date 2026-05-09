@@ -13,3 +13,7 @@ z.object({
     productId: z.string().uuid(),
     quantity: z.number().int().positive(),
 });
+
+export const clearCartSchema = z.object({
+    cartId: z.string().uuid(),
+})

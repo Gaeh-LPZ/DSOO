@@ -4,6 +4,9 @@ import { SaleItem } from "../domain/SaleItem";
 import { ProductRepository } from "@/modules/product/infrastructure/product.repository";
 import { SaleRepository } from "../infrastructure/sale.repository";
 import { Payment, PaymentMethod } from "../domain/Payment";
+import Stripe from "stripe";
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 export function parsePaymentMethod(method: string): PaymentMethod {
     const normalized = method.trim().toUpperCase();
@@ -24,42 +27,62 @@ export class SaleService {
     ) { }
 
     // Caso de Uso: Crear Venta
-    async createSale(data: { userId: string; storeId: string; customerId?: string; items: { productId: string; quantity: number }[]; }) {
+    async createSale(data: { userId: string; storeId: string; customerId?: string; items: { productId: string; quantity: number }[]}) {
+        if (data.items.length === 0) throw new Error("La venta debe tener al menos un item")
 
-        if (data.items.length === 0) {
-            throw new Error("La venta debe tener al menos un item");
+        let storeId = data.storeId
+
+        // Si es venta online, buscar tienda con stock suficiente
+        if (storeId === process.env.STORE_ONLINE_ID) {
+            storeId = await this.findStoreWithStock(data.items)
         }
 
         const sale = new Sale(
             crypto.randomUUID(),
             data.userId,
-            data.storeId,
+            storeId,        // ← ya es la tienda real con stock
             data.customerId ?? null,
-        );
+        )
 
         for (const item of data.items) {
-            const product = await this.productRepo.findById(item.productId);
-            if (!product) throw new Error("Producto no existe");
+            const product = await this.productRepo.findById(item.productId)
+            if (!product) throw new Error("Producto no existe")
 
-            const stock = await this.stockRepo.findByProductAndStore(
-                item.productId,
-                data.storeId
-            );
-
+            const stock = await this.stockRepo.findByProductAndStore(item.productId, storeId)
             if (!stock || stock.getQuantity() < item.quantity) {
-                throw new Error("Stock insuficiente");
+                throw new Error(`Stock insuficiente para ${product.name}`)
             }
 
-            const saleItem = new SaleItem(
-                product.id,
-                item.quantity,
-                product.getPrice()
-            );
-
-            sale.addItem(saleItem);
+            sale.addItem(new SaleItem(product.id, item.quantity, product.getPrice()))
         }
 
-        return this.repo.create(sale);
+        return this.repo.create(sale)
+    }
+
+    // Encuentra la primera tienda que tenga stock de TODOS los productos
+    private async findStoreWithStock( items: { productId: string; quantity: number }[]): Promise<string> {
+        // Obtener todas las tiendas excepto la online
+        const stores = await this.stockRepo.findAllStores()
+        const realStores = stores.filter(s => s.id !== process.env.STORE_ONLINE_ID)
+
+        for (const store of realStores) {
+            let hasAll = true
+
+            for (const item of items) {
+                const stock = await this.stockRepo.findByProductAndStore(
+                    item.productId,
+                    store.id
+                )
+                if (!stock || stock.getQuantity() < item.quantity) {
+                    hasAll = false
+                    break
+                }
+            }
+
+            if (hasAll) return store.id
+        }
+
+        throw new Error("No hay tienda con stock suficiente para completar el pedido")
     }
 
     // Caso de Uso: Pagar Venta
@@ -77,7 +100,6 @@ export class SaleService {
         );
 
         sale.addPayment(payment);
-
         return this.repo.addPayment(saleId, payment);
     }
 
@@ -90,10 +112,32 @@ export class SaleService {
     async getTopProducts(storeId: string, limit: number = 5) {
         return this.repo.findTopProducts(storeId, limit)
     }
-    
+
     async getTotalSales(storeId: string, startDate: Date, endDate: Date) {
         return this.repo.getTotalSales(storeId, startDate, endDate)
     }
-    
-}
 
+    async createStripePaymentIntent(saleId: string) {
+        const sale = await this.repo.findById(saleId);
+        if (!sale) throw new Error("Venta no existe");
+
+        if (sale.getStatus() !== "PENDING") {
+            throw new Error("La venta ya no está pendiente");
+        }
+
+        const amount = sale.getPendingAmount();
+        if (amount <= 0) {
+            throw new Error("No hay monto pendiente");
+        }
+
+        const paymentIntent = await stripe.paymentIntents.create({
+            amount: Math.round(amount * 100),
+            currency: "mxn",
+            metadata: {
+                saleId: sale.id
+            }
+        });
+
+        return paymentIntent.client_secret;
+    }
+}

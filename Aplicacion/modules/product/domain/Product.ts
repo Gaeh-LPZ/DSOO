@@ -4,6 +4,7 @@ export class Product {
         public id: string,
         public name: string,
         public sku: string,
+        public category: string,
         public price: number,
         public cost: number,
         public isActive: boolean = true,
