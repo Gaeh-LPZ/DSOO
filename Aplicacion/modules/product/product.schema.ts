@@ -23,8 +23,8 @@ export const deactivateProductSchema = z.object({
 
 export const listProductsSchema = z.object({
     cantidad: z.number().int().positive().default(20),
+    categoria: z.string().optional()
 })
-
 
 export const getProductByIdSchema = z.object({
     id: z.string().uuid(),

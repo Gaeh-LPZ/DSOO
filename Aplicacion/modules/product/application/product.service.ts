@@ -49,8 +49,8 @@ export class ProductService {
     }
 
     // Caso de uso: Lista de Prodcutos (Implicito)
-    async listProducts(cantidad?: number): Promise<Product[]> {              // Trae lista de producto depende de cantidad
-        const products = await this.repo.findAll(cantidad)
+    async listProducts(cantidad?: number, categoria?: string): Promise<Product[]> {              // Trae lista de producto depende de cantidad
+        const products = await this.repo.findAll(cantidad, categoria)
         return products.filter(p => p.isActive)
     }
 

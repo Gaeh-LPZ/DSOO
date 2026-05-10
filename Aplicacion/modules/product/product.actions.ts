@@ -27,7 +27,9 @@ export async function deactivateProductAction(data: any) {
 
 export async function listProductsAction(data: any) {
     const parsed = listProductsSchema.parse(data)
-    const products = await productService.listProducts(parsed.cantidad)
+    const products = await productService.listProducts(parsed.cantidad, parsed.categoria)
+    console.log("categoria:", parsed.categoria)
+    console.log("productos:", products) 
     
     return products.map(p => ({
         id: p.id,

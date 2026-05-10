@@ -7,17 +7,17 @@ export class ProductRepository {
         id: string;
         name: string;
         sku: string;
-        category: string;
         price: number;
         cost: number;
         isActive: boolean;
         imageUrl: string | null;
+        categories: { category: { name: string } }[];
     }): Product {
         return new Product(
             data.id,
             data.name,
             data.sku,
-            data.category,
+            data.categories.map(pc => pc.category.name),
             data.price,
             data.cost,
             data.isActive,
@@ -25,16 +25,26 @@ export class ProductRepository {
         );
     }
 
+    private includeCategories = {
+        categories: { include: { category: true } }
+    }
+
     async findBySKU(sku: string): Promise<Product | null> {
-        const data = await prisma.product.findUnique({ where: { sku } });
+        const data = await prisma.product.findUnique({
+            where: { sku },
+            include: this.includeCategories
+        });
         if (!data) return null;
         return this.toEntity(data);
     }
 
     async findById(id: string): Promise<Product | null> {
-        const data = await prisma.product.findUnique({ where: { id } });
+        const data = await prisma.product.findUnique({
+            where: { id },
+            include: this.includeCategories
+        });
         if (!data) return null;
-        return this.toEntity(data); 
+        return this.toEntity(data);
     }
 
     async create(product: Product): Promise<Product> {
@@ -43,12 +53,12 @@ export class ProductRepository {
                 id: product.id,
                 name: product.getName(),
                 sku: product.getSku(),
-                category: product.category,  
                 price: product.getPrice(),
                 cost: product.getCost(),
                 isActive: product.getIsActive(),
                 imageUrl: product.imageUrl
-            }
+            },
+            include: this.includeCategories
         });
         return this.toEntity(data);
     }
@@ -58,21 +68,29 @@ export class ProductRepository {
             where: { id: product.id },
             data: {
                 name: product.getName(),
-                category: product.category,  
                 price: product.getPrice(),
                 cost: product.getCost(),
                 isActive: product.getIsActive(),
                 imageUrl: product.imageUrl
-            }
+            },
+            include: this.includeCategories
         });
         return this.toEntity(data);
     }
 
-    async findAll(limit?: number): Promise<Product[]> {
+    async findAll(limit?: number, categoria?: string): Promise<Product[]> {
         const data = await prisma.product.findMany({
-            where: { isActive: true },
+            where: {
+                isActive: true,
+                ...(categoria ? {
+                    categories: {
+                        some: { category: { name: categoria } }
+                    }
+                } : {})
+            },
+            include: this.includeCategories,
             ...(limit ? { take: limit } : {})
         });
-        return data.map(p => this.toEntity(p)); 
+        return data.map(p => this.toEntity(p));
     }
 }
