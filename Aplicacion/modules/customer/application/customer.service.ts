@@ -66,6 +66,7 @@ export class CustomerService {
     const loyalty = await this.repo.findLoyaltyByCustomerId(userId);
 
     return {
+      id: customer.id,
       nombre: customer.name,
       email: customer.email || "",
       telefono: customer.phone || "",

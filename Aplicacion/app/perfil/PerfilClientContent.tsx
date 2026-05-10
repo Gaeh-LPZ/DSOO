@@ -5,11 +5,14 @@ import PerfilForm from "./PerfilForm";
 import { CloseLoginAction } from "@/share/closeSession";
 import WelcomeModal from "./BienvenidaModal";
 import EnvioTab from "./EnvioTab";
+import PedidosTab from "./PedidosTab";
+import PagosTab from "./PagosTab";
 
-type TabType = "datos" | "pedidos" | "direcciones" | "pagos" | "seguridad";
+type TabType = "datos" | "envios" | "pedidos" | "pagos" | "seguridad";
 
 interface Props {
     userData: {
+        id: string,
         nombre: string;
         email: string;
         telefono: string;
@@ -24,6 +27,7 @@ export default function PerfilClientContent({ userData }: Props) {
     const [activeTab, setActiveTab] = useState<TabType>("datos");
     const [puntos, setPuntos] = useState(0);
     const [mostrarModal, setMostrarModal] = useState(false);
+    const [saleIdEnvio, setSaleIdEnvio] = useState<string>("");
 
     useEffect(() => {
         const yaVio = localStorage.getItem("bienvenidaMostrada");
@@ -50,9 +54,15 @@ export default function PerfilClientContent({ userData }: Props) {
         setPuntos(userData.puntos);
     };
 
+    const irAEnvio = (saleId: string) => {
+        setSaleIdEnvio(saleId);
+        setActiveTab("envios");
+    };
+
+
     return (
         <div className="flex flex-col md:flex-row gap-8">
-            {mostrarModal && ( <WelcomeModal nombre={userData.nombre} puntosReales={userData.puntos} onFinish={cerrarModal}/>)}
+            {mostrarModal && (<WelcomeModal nombre={userData.nombre} puntosReales={userData.puntos} onFinish={cerrarModal} />)}
 
             {/* SIDEBAR */}
             <aside className="w-full md:w-64 flex-shrink-0">
@@ -91,10 +101,10 @@ export default function PerfilClientContent({ userData }: Props) {
                         <span className="material-symbols-outlined">badge</span> Mis Datos
                     </button>
                     <button onClick={() => setActiveTab("pedidos")} className={getTabClass("pedidos")}>
-                        <span className="material-symbols-outlined">local_shipping</span> Mis Envíos
+                        <span className="material-symbols-outlined">package</span> Mis Pedidos
                     </button>
-                    <button onClick={() => setActiveTab("direcciones")} className={getTabClass("direcciones")}>
-                        <span className="material-symbols-outlined">location_on</span> Direcciones
+                    <button onClick={() => setActiveTab("envios")} className={getTabClass("envios")}>
+                        <span className="material-symbols-outlined">local_shipping</span> Mis Envíos
                     </button>
                     <button onClick={() => setActiveTab("pagos")} className={getTabClass("pagos")}>
                         <span className="material-symbols-outlined">credit_card</span> Pagos
@@ -115,9 +125,22 @@ export default function PerfilClientContent({ userData }: Props) {
             {/* CONTENIDO PRINCIPAL */}
             <section className="flex-1 bg-white p-8 rounded-2xl shadow-sm border border-slate-100 min-h-[600px]">
                 {activeTab === "datos" && <PerfilForm initialData={userData} />}
-                {activeTab === "pedidos" && <EnvioTab saleIds={[]} />}
+                {activeTab === "envios" && (
+                    <EnvioTab saleIds={[]} initialSaleId={saleIdEnvio} />
+                )}
 
-                {activeTab !== "datos" && activeTab !== "pedidos" && (
+                {activeTab === "pedidos" && <PedidosTab
+                    customerId={userData.id}
+                    onVerEnvio={irAEnvio}
+                />}
+
+                {activeTab === "pagos" && (
+                    <PagosTab
+                        nombre={userData.nombre}
+                    />
+                )}
+
+                {activeTab !== "datos" && activeTab !== "envios" && activeTab !== "pedidos" && activeTab !== "pagos"  &&(
                     <div className="text-center py-20 text-slate-400">
                         <p>Contenido de {activeTab} en desarrollo...</p>
                     </div>

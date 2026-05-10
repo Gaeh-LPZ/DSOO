@@ -1,5 +1,5 @@
 "use client"
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { getShipmentBySaleIdAction } from "@/modules/shipment/shipment.actions";
 import { getSaleWithItemsAction } from "@/modules/sale/sale.actions";
 
@@ -21,12 +21,21 @@ const statusColor: Record<string, string> = {
     DELIVERED: "text-green-600",
 };
 
-export default function EnvioTab({ saleIds }: { saleIds: string[] }) {
-    const [busqueda, setBusqueda] = useState("");
+interface Props {
+    saleIds: string[];
+    initialSaleId?: string;          
+}
+
+export default function EnvioTab({ saleIds, initialSaleId }: Props) {
+    const [busqueda, setBusqueda] = useState(initialSaleId || "");
     const [envio, setEnvio] = useState<any>(null);
     const [venta, setVenta] = useState<any>(null);
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        if (initialSaleId) buscar();   // busca apenas se monta con un id
+     }, []);
 
     const buscar = async () => {
         if (!busqueda.trim()) return;

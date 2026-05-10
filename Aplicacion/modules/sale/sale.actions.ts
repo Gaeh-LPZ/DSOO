@@ -48,16 +48,35 @@ export async function getSaleAction(data: any) {
 
 export async function getSalesByCustomerAction(customerId: string) {
     try {
-        const ventas = await saleRepo.findByCustomerId(customerId)
-        return { success: true, data: ventas }
-    } catch (error: any) {
-        return { success: false, message: error.message }
+        const ventas = await saleService.findSalesByCustomerId(customerId)
+        const data = ventas.map(s => ({
+            id: s.id,
+            total: s.total,
+            status: s.status,
+            createdAt: s.createdAt.toISOString(),  // Date → string
+            items: s.items.map(i => ({
+                id: i.id,
+                productId: i.productId,
+                name: i.product.name,
+                imageUrl: i.product.imageUrl ?? null,
+                quantity: i.quantity,
+                price: i.price,
+            })),
+            shipment: s.shipment ? {
+                status: s.shipment.status,
+                tracking: s.shipment.tracking,
+            } : null,
+        }))
+
+        return { success: true, data }
+    } catch (e: any) {
+        return { success: false, error: e.message ?? "Error al cargar pedidos" }
     }
 }
 
 export async function getSaleWithItemsAction(saleId: string) {
     try {
-        const venta = await saleRepo.findById(saleId)
+        const venta = await saleService.findById(saleId)
         if (!venta) return { success: false, message: "Venta no encontrada" }
         return {
             success: true,
@@ -116,6 +135,6 @@ export async function createSaleFromCartAction() {
         items,
     })
 
-    await clearCartAction() 
+    await clearCartAction()
     return sale.id
 }

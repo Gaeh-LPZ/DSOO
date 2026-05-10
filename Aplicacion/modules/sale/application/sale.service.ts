@@ -155,4 +155,9 @@ export class SaleService {
 
         return paymentIntent.client_secret;
     }
+
+    async findSalesByCustomerId(saleId: string) {
+        const sales = await this.repo.findByCustomerId(saleId)
+        return sales
+    }
 }
