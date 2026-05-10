@@ -37,9 +37,12 @@ export class Sale {
     }
 
     getTotal(): number {
-        return this.items.reduce((total, item) => {
+        const subtotal = this.items.reduce((total, item) => {
             return total + item.getSubtotal();
-        }, 0)
+        }, 0);
+
+        const IVA = 0.16;
+        return subtotal * (1 + IVA)
     }
 
     addPayment(payment: Payment) {
@@ -86,39 +89,39 @@ export class Sale {
         }
     }
 
-        getPaidAmount(): number {
-            return this.payments.reduce((sum, p) => sum + p.amount, 0);
-        }
-
-        getPendingAmount(): number {
-            return this.getTotal() - this.getPaidAmount();
-        }
-
-        markAsPaid() {
-            if (this.getPendingAmount() > 0) {
-                throw new Error("No puedes marcar como pagada si falta dinero");
-            }
-
-            this.status = SaleStatus.PAID;
-        }
-
-        cancel() {
-            if (this.status === "PAID") {
-                throw new Error("No se puede cancelar (Pagado)")
-            }
-
-            this.status = SaleStatus.CANCELLED;
-        }
-
-        getItems(): SaleItem[] {
-            return this.items;
-        }
-
-        getPayments(): Payment[] {
-            return this.payments;
-        }
-
-        getStatus(): SaleStatus {
-            return this.status;
-        }
+    getPaidAmount(): number {
+        return this.payments.reduce((sum, p) => sum + p.amount, 0);
     }
+
+    getPendingAmount(): number {
+        return this.getTotal() - this.getPaidAmount();
+    }
+
+    markAsPaid() {
+        if (this.getPendingAmount() > 0) {
+            throw new Error("No puedes marcar como pagada si falta dinero");
+        }
+
+        this.status = SaleStatus.PAID;
+    }
+
+    cancel() {
+        if (this.status === "PAID") {
+            throw new Error("No se puede cancelar (Pagado)")
+        }
+
+        this.status = SaleStatus.CANCELLED;
+    }
+
+    getItems(): SaleItem[] {
+        return this.items;
+    }
+
+    getPayments(): Payment[] {
+        return this.payments;
+    }
+
+    getStatus(): SaleStatus {
+        return this.status;
+    }
+}

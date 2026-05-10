@@ -138,3 +138,39 @@ export async function createSaleFromCartAction() {
     await clearCartAction()
     return sale.id
 }
+
+export async function getSaleSummaryAction(saleId: string) {
+    try {
+        const venta = await saleService.findById(saleId);
+        if (!venta) return { success: false, message: "Venta no encontrada" };
+        const itemsRaiz = venta.getItems();
+
+        const itemsConNombre = await Promise.all(
+            itemsRaiz.map(async (item) => {
+                const producto = await productRepo.findById(item.getProductId());
+                return {
+                    nombre: producto?.name || "Producto desconocido",
+                    cantidad: item.getQuantity(),
+                    precio: item.getPrice(),
+                    subtotal: item.getSubtotal()
+                };
+            })
+        );
+        const pagos = (venta as any).payments?.map((p: any) => ({
+            metodo: p.method,
+            monto: p.amount
+        })) || [];
+
+        return {
+            success: true,
+            data: {
+                id: venta.id,
+                total: venta.getTotal(),
+                productos: itemsConNombre,
+                pagos: pagos
+            }
+        };
+    } catch (error: any) {
+        return { success: false, message: error.message };
+    }
+}

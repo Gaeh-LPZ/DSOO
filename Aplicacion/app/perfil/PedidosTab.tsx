@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { getSalesByCustomerAction } from "@/modules/sale/sale.actions";
+import { useRouter } from "next/navigation";
 
 interface SaleItemData {
     id: string;
@@ -111,6 +112,7 @@ export default function PedidosTab({ customerId, onVerEnvio }: Props) {
 function TarjetaPedido({ pedido, expandido, onToggle, onVerEnvio, }: { pedido: PedidoData; expandido: boolean; onToggle: () => void; onVerEnvio: (saleId: string) => void; }) {
     const { shipment } = pedido;
     const entregado = shipment?.status === "DELIVERED";
+    const router = useRouter();
 
     const fecha = new Date(pedido.createdAt).toLocaleDateString("es-MX", {
         day: "2-digit", month: "short", year: "numeric",
@@ -259,6 +261,22 @@ function TarjetaPedido({ pedido, expandido, onToggle, onVerEnvio, }: { pedido: P
                             )}
                         </div>
                     )}
+
+                    <div className="mt-3 flex justify-end">
+                        {/* Factura */}
+                        <button
+                            onClick={() => router.push(`/facturacion/${pedido.id}`)}
+                            className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full 
+                                border border-slate-300 text-slate-700 
+                                hover:bg-slate-900 hover:text-white hover:border-slate-900
+                                transition-all duration-200"
+                        >
+                            <span className="material-symbols-outlined" style={{ fontSize: "14px" }}>
+                                receipt_long
+                            </span>
+                            Factura Electronica
+                        </button>
+                    </div>
                 </div>
             )}
         </div>

@@ -213,7 +213,7 @@ export class SaleRepository {
                         product: {          // ← join a Product
                             select: {
                                 name: true,
-                                imageUrl: true, 
+                                imageUrl: true,
                             }
                         }
                     }
