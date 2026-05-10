@@ -56,7 +56,12 @@ export class ProductRepository {
                 price: product.getPrice(),
                 cost: product.getCost(),
                 isActive: product.getIsActive(),
-                imageUrl: product.imageUrl
+                imageUrl: product.imageUrl,
+                categories: {
+                    create: product.categories.map(name => ({   // conecta cada categoría por nombre
+                        category: { connect: { name } }
+                    }))
+                }
             },
             include: this.includeCategories
         });
@@ -71,7 +76,13 @@ export class ProductRepository {
                 price: product.getPrice(),
                 cost: product.getCost(),
                 isActive: product.getIsActive(),
-                imageUrl: product.imageUrl
+                imageUrl: product.imageUrl,
+                categories: {
+                    deleteMany: {},                              // borra todas las relaciones actuales
+                    create: product.categories.map(name => ({   // crea las nuevas
+                        category: { connect: { name } }
+                    }))
+                }
             },
             include: this.includeCategories
         });

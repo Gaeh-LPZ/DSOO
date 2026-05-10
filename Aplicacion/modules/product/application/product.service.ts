@@ -5,16 +5,15 @@ export class ProductService {
     constructor(private repo: ProductRepository) { }
 
     // Caso de Uso: Crear Producto
-    async createProduct(data: { name: string; sku: string; category?: string; price: number; cost: number; imageUrl?: string; }): Promise<Product> {
-
-        const existing = await this.repo.findBySKU(data.sku);               // Busca por SKU (unico)
+    async createProduct(data: {name: string;sku: string;categories?: string[];   price: number;cost: number;imageUrl?: string;}): Promise<Product> {
+        const existing = await this.repo.findBySKU(data.sku);
         if (existing) throw new Error("El SKU ya existe");
 
-        const product = new Product(                                        // Si ve que no hay producto co ese SKU
-            crypto.randomUUID(),                                            // crea un nuevo producto
+        const product = new Product(
+            crypto.randomUUID(),
             data.name,
             data.sku,
-            data.category ?? "General",
+            data.categories ?? [],     
             data.price,
             data.cost,
             true,
@@ -25,39 +24,38 @@ export class ProductService {
     }
 
     // Caso de uso: Actualizar Producto
-    async updateProduct(id: string, data: { name?: string; category?: string; price?: number; cost?: number; imageUrl?: string }): Promise<Product> {
+    async updateProduct(id: string, data: { name?: string; categories?: string[]; price?: number; cost?: number; imageUrl?: string;}): Promise<Product> {
+        const product = await this.repo.findById(id);
+        if (!product) throw new Error("Producto no encontrado");
 
-        const product = await this.repo.findById(id);                       // Busca producto por ID
-        if (!product) throw new Error("Producto no encontrado");            // No encuentra sale alerta
-
-        if (data.name !== undefined) product.changeName(data.name);         // Condicion de que si cambia nombre trae el cambio
-        if (data.category !== undefined) product.category = data.category;
-        if (data.price !== undefined) product.changePrice(data.price);      // Condicion que si cambia Precio trae el cambio VALIDADO
-        if (data.cost !== undefined) product.changeCost(data.cost);         // Condicion que si cambia costo trae el cambio VALIDADO
-        if (data.imageUrl !== undefined) product.imageUrl = data.imageUrl
+        if (data.name !== undefined) product.changeName(data.name);
+        if (data.price !== undefined) product.changePrice(data.price);  // valida en dominio
+        if (data.cost !== undefined) product.changeCost(data.cost);     // valida en dominio
+        if (data.imageUrl !== undefined) product.imageUrl = data.imageUrl;
+        if (data.categories !== undefined) product.categories = data.categories;
 
         return this.repo.update(product);
     }
 
+    // Caso de uso: Desactivar Producto
     async deactivateProduct(id: string): Promise<Product> {
-        const product = await this.repo.findById(id);                       // Trae el producto por ID
+        const product = await this.repo.findById(id);
         if (!product) throw new Error("Producto no encontrado");
 
-        product.desactive();
+        product.desactive();   // lanza error si ya está inactivo (validación en dominio)
 
-        return this.repo.update(product);                                   // Actualiza el isActive con false
+        return this.repo.update(product);
     }
 
-    // Caso de uso: Lista de Prodcutos (Implicito)
-    async listProducts(cantidad?: number, categoria?: string): Promise<Product[]> {              // Trae lista de producto depende de cantidad
-        const products = await this.repo.findAll(cantidad, categoria)
-        return products.filter(p => p.isActive)
+    // Caso de uso: Lista de Productos
+    async listProducts(cantidad?: number, categoria?: string): Promise<Product[]> {
+        return this.repo.findAll(cantidad, categoria);
     }
 
-    async getProductById(id: string):Promise<Product> {
-        const product = await this.repo.findById(id);                       // Trae el producto por ID
+    // Caso de uso: Obtener Producto por ID
+    async getProductById(id: string): Promise<Product> {
+        const product = await this.repo.findById(id);
         if (!product) throw new Error("Producto no encontrado");
-
-        return product
+        return product;
     }
 }

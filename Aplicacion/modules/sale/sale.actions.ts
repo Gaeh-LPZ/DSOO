@@ -12,6 +12,7 @@ import { CustomerService } from "../customer/application/customer.service"
 import { CustomerRepository } from "../customer/infrastructure/customer.repository"
 import { HashService } from "@/infrastructure/security/has.service"
 import { JwtService } from "@/infrastructure/security/jwt.service"
+import { getProductByIdAction } from "../product/product.actions"
 
 const saleRepo = new SaleRepository()
 const stockRepo = new StockRepository()
@@ -147,7 +148,7 @@ export async function getSaleSummaryAction(saleId: string) {
 
         const itemsConNombre = await Promise.all(
             itemsRaiz.map(async (item) => {
-                const producto = await productRepo.findById(item.getProductId());
+                const producto = await getProductByIdAction({id: item.getProductId()}); //Checar
                 return {
                     nombre: producto?.name || "Producto desconocido",
                     cantidad: item.getQuantity(),
