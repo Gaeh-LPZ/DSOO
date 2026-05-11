@@ -26,7 +26,17 @@ export class DashboardRepository {
 
     async getSaleItems() {
         return prisma.saleItem.findMany({
-            include: { product: true }
+            include: { 
+                product: {
+                    include: {
+                        categories: {
+                            include: {
+                                category: true
+                            }
+                        }
+                    }
+                } 
+            }
         });
     }
 }

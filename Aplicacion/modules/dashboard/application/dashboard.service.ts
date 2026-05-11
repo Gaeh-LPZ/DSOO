@@ -39,7 +39,8 @@ export class DashboardService {
         const salesItems = await this.repo.getSaleItems();
 
         const grouping = salesItems.reduce((acc: Record<string, number>, item) => {
-            const cat = item.product.category;
+            const cat = item.product.categories?.[0]?.category?.name || "Sin categoría";
+            
             const amount = item.price * item.quantity;
             acc[cat] = (acc[cat] ?? 0) + amount;
             return acc;
