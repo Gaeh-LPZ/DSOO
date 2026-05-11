@@ -155,7 +155,7 @@ function StoreCard({ store }: { store: StoreReport }) {
               ].map((item, i) => (
                 <div key={i} className="flex justify-between items-center py-2 border-b border-slate-50">
                   <span className="text-xs text-slate-500">{item.label}</span>
-                  <span className="text-xs font-semibold text-slate-800 text-right max-w-[180px] truncate">{item.value}</span>
+                  <span className="text-xs font-semibold text-slate-800 text-right max-w-45 truncate">{item.value}</span>
                 </div>
               ))}
             </div>
