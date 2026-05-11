@@ -160,4 +160,24 @@ export class SaleService {
         const sales = await this.repo.findByCustomerId(saleId)
         return sales
     }
+
+    async getTopProductsWithStock(limit: number = 10) {
+        return this.repo.findTopProductsWithStock(limit)
+    }
+
+    async getTotalSalesByStore() {
+        return this.repo.getTotalSalesByStore()
+    }
+
+    async getSalesByDayOfWeek(storeId?: string) {
+        return this.repo.getSalesByDayOfWeek(storeId)
+    }
+
+    async getLowStockProducts(minQuantity?: number) {
+        return this.repo.getLowStockProducts(minQuantity)
+    }
+
+    async getTopProductsByDateRange(startDate: Date, endDate: Date, limit: number = 10) {
+        return this.repo.findTopProductsByDateRange(startDate, endDate, limit)
+    }
 }

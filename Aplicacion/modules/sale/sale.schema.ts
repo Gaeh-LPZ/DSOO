@@ -30,3 +30,17 @@ export const getTotalSalesSchema = z.object({
     startDate: z.coerce.date(),
     endDate: z.coerce.date(),
 })
+
+export const getTopProductsWithStockSchema = z.object({
+    limit: z.number().int().positive().optional(),
+})
+
+export const getSalesByDaySchema = z.object({
+    storeId: z.string().optional(),
+})
+
+export const getTopProductsByDateRangeSchema = z.object({
+    startDate: z.coerce.date(),
+    endDate: z.coerce.date(),
+    limit: z.number().int().positive().optional(),
+})

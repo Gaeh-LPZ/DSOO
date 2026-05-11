@@ -3,7 +3,7 @@ import { SaleService } from "./application/sale.service"
 import { SaleRepository } from "./infrastructure/sale.repository"
 import { StockRepository } from "@/modules/product/infrastructure/stock.repository"
 import { ProductRepository } from "@/modules/product/infrastructure/product.repository"
-import { createSaleSchema, paySaleSchema, getSaleSchema } from "./sale.schema"
+import { createSaleSchema, paySaleSchema, getSaleSchema, getTopProductsWithStockSchema, getSalesByDaySchema, getTopProductsByDateRangeSchema } from "./sale.schema"
 import { getTopProductsSchema, getTotalSalesSchema } from "./sale.schema"
 import { getSession, requireRole } from "@/share/auth"
 import { CarByCustomerId, clearCartAction } from "../carrito/carrito.actions"
@@ -113,6 +113,7 @@ export async function createStripePaymentIntentAction(data: any) {
     return saleService.createStripePaymentIntent(parsed.saleId)
 }
 
+
 export async function createSaleFromCartAction() {
     const session = await getSession()
     if (!session) throw new Error("No autorizado")
@@ -174,4 +175,27 @@ export async function getSaleSummaryAction(saleId: string) {
     } catch (error: any) {
         return { success: false, message: error.message };
     }
+}
+
+export async function getTopProductsWithStockAction(data?: any) {
+    const parsed = getTopProductsWithStockSchema.parse(data ?? {})
+    return saleService.getTopProductsWithStock(parsed.limit)
+}
+
+export async function getTotalSalesByStoreAction() {
+    return saleService.getTotalSalesByStore()
+}
+
+export async function getSalesByDayAction(data?: any) {
+    const parsed = getSalesByDaySchema.parse(data ?? {})
+    return saleService.getSalesByDayOfWeek(parsed.storeId)
+}
+
+export async function getLowStockAction() {
+    return saleService.getLowStockProducts()
+}
+
+export async function getTopProductsByDateRangeAction(data: any) {
+    const parsed = getTopProductsByDateRangeSchema.parse(data)
+    return saleService.getTopProductsByDateRange(parsed.startDate, parsed.endDate, parsed.limit)
 }

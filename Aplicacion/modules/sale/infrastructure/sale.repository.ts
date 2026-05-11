@@ -224,4 +224,179 @@ export class SaleRepository {
             orderBy: { createdAt: 'desc' }
         })
     }
+
+    async findTopProductsWithStock(limit: number = 10) {
+        const result = await prisma.saleItem.groupBy({
+            by: ['productId'],
+            where: {
+                sale: {
+                    status: { in: ['PAID', 'CREDIT'] }
+                }
+            },
+            _sum: {
+                quantity: true
+            },
+            orderBy: {
+                _sum: {
+                    quantity: 'desc'
+                }
+            },
+            take: limit
+        })
+    
+        const withDetails = await Promise.all(
+            result.map(async (item) => {
+                const product = await prisma.product.findUnique({
+                    where: { id: item.productId },
+                    select: {
+                        name: true,
+                        sku: true,
+                        price: true,
+                        stock: {
+                            select: {
+                                quantity: true,
+                                storeId: true,
+                                store: { select: { name: true } }
+                            }
+                        }
+                    }
+                })
+                const totalStock = product?.stock.reduce((sum, s) => sum + s.quantity, 0) ?? 0
+                return {
+                    productId: item.productId,
+                    name: product?.name ?? item.productId,
+                    sku: product?.sku ?? '',
+                    price: product?.price ?? 0,
+                    unitsSold: item._sum.quantity ?? 0,
+                    totalStock,
+                    stockByStore: product?.stock ?? []
+                }
+            })
+        )
+    
+        return withDetails
+    }
+    async getTotalSalesByStore() {
+        const stores = await prisma.store.findMany({
+            select: {
+                id: true,
+                name: true,
+                _count: {
+                    select: {
+                        sales: {
+                            where: {
+                                status: { in: ['PAID', 'CREDIT'] }
+                            }
+                        }
+                    }
+                }
+            }
+        })
+    
+        const withTotals = await Promise.all(
+            stores.map(async (store) => {
+                const total = await prisma.sale.aggregate({
+                    where: {
+                        storeId: store.id,
+                        status: { in: ['PAID', 'CREDIT'] }
+                    },
+                    _sum: { total: true }
+                })
+                return {
+                    storeId: store.id,
+                    storeName: store.name,
+                    totalSales: total._sum.total ?? 0,
+                    totalOrders: store._count.sales
+                }
+            })
+        )
+    
+        return withTotals
+    }
+    async getSalesByDayOfWeek(storeId?: string) {
+        const sales = await prisma.sale.findMany({
+            where: {
+                status: { in: ['PAID', 'CREDIT'] },
+                ...(storeId ? { storeId } : {}),
+            },
+            select: {
+                createdAt: true,
+                total: true,
+            }
+        })
+    
+        const days = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
+        const result = days.map((day, i) => ({
+            day,
+            total: sales
+                .filter(s => new Date(s.createdAt).getDay() === i)
+                .reduce((sum, s) => sum + s.total, 0)
+        }))
+    
+        return result
+    }
+
+    async getLowStockProducts(minQuantity: number = 5) {
+        const stocks = await prisma.stock.findMany({
+            where: {
+                quantity: { lte: minQuantity }
+            },
+            include: {
+                product: { select: { name: true, sku: true } },
+                store: { select: { name: true } }
+            }
+        })
+        return stocks.map(s => ({
+            productName: s.product.name,
+            sku: s.product.sku,
+            storeName: s.store.name,
+            quantity: s.quantity,
+        }))
+    }
+
+    async findTopProductsByDateRange(startDate: Date, endDate: Date, limit: number = 10) {
+        const result = await prisma.saleItem.groupBy({
+            by: ['productId'],
+            where: {
+                sale: {
+                    status: { in: ['PAID', 'CREDIT'] },
+                    createdAt: { gte: startDate, lte: endDate }
+                }
+            },
+            _sum: { quantity: true },
+            orderBy: { _sum: { quantity: 'desc' } },
+            take: limit
+        })
+    
+        const withDetails = await Promise.all(
+            result.map(async (item) => {
+                const product = await prisma.product.findUnique({
+                    where: { id: item.productId },
+                    select: {
+                        name: true,
+                        sku: true,
+                        price: true,
+                        stock: {
+                            select: {
+                                quantity: true,
+                                storeId: true,
+                                store: { select: { name: true } }
+                            }
+                        }
+                    }
+                })
+                const totalStock = product?.stock.reduce((sum, s) => sum + s.quantity, 0) ?? 0
+                return {
+                    productId: item.productId,
+                    name: product?.name ?? item.productId,
+                    sku: product?.sku ?? '',
+                    price: product?.price ?? 0,
+                    unitsSold: item._sum.quantity ?? 0,
+                    totalStock,
+                }
+            })
+        )
+    
+        return withDetails
+    }
 }
