@@ -122,6 +122,91 @@ export default function FacturaForm({ orderId, customer, ventas }: { orderId: st
     }, 500);
   };
 
+  // FUNCIÓN PARA GENERAR EL XML
+  const generarFacturaXML = () => {
+    const fecha = new Date().toISOString();
+    const iva = ventas.total * 0.16;
+    const subtotal = ventas.total - iva;
+
+    const conceptos = ventas.productos.map((p: any) => `
+        <cfdi:Concepto
+            Descripcion="${escaparXML(p.nombre)}"
+            Cantidad="${p.cantidad}"
+            ValorUnitario="${p.precio.toFixed(2)}"
+            Importe="${p.subtotal.toFixed(2)}"
+        />`
+    ).join("");
+
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+      <cfdi:Comprobante
+          xmlns:cfdi="http://www.sat.gob.mx/cfd/4"
+          Version="4.0"
+          Fecha="${fecha}"
+          SubTotal="${subtotal.toFixed(2)}"
+          Total="${ventas.total.toFixed(2)}"
+          TipoDeComprobante="I"
+          Folio="${ticketNum}">
+
+          <cfdi:Emisor
+              Rfc="MIS123456TX1"
+              Nombre="The Atelier S.A. DE C.V."
+              RegimenFiscal="601"
+          />
+
+          <cfdi:Receptor
+              Rfc="${escaparXML(rfc)}"
+              Nombre="${escaparXML(nombre)} ${escaparXML(apellidos)}"
+              DomicilioFiscalReceptor="${codigoPostal}"
+              RegimenFiscalReceptor="${regimenFiscal.split("–")[0].trim()}"
+              UsoCFDI="${usoCfdi.split("–")[0].trim()}"
+          />
+
+          <cfdi:Conceptos>${conceptos}
+          </cfdi:Conceptos>
+
+          <cfdi:Impuestos TotalImpuestosTrasladados="${iva.toFixed(2)}">
+              <cfdi:Traslados>
+                  <cfdi:Traslado
+                      Base="${subtotal.toFixed(2)}"
+                      Impuesto="002"
+                      TipoFactor="Tasa"
+                      TasaOCuota="0.160000"
+                      Importe="${iva.toFixed(2)}"
+                  />
+              </cfdi:Traslados>
+          </cfdi:Impuestos>
+
+      </cfdi:Comprobante>`;
+
+    // Descarga igual que el PDF
+    const blob = new Blob([xml], { type: "application/xml" });
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `Factura_${rfc}_${ticketNum.split("-")[0]}.xml`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    URL.revokeObjectURL(url);
+
+    setTimeout(() => {
+      router.push("/perfil");
+    }, 500);
+  };
+
+  // Fuera del componente o como helper
+  const escaparXML = (str: string): string => {
+    if (!str) return "";
+    return str
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&apos;");
+  };
+
   const validateStep = () => {
     if (step === 2 && (!rfc || !tipoPersona || !regimenFiscal || !usoCfdi)) {
       setModal({ open: true, message: "Completa los datos fiscales" });
@@ -246,7 +331,18 @@ export default function FacturaForm({ orderId, customer, ventas }: { orderId: st
                 }}
                 className="flex-1 py-2 bg-emerald-600 text-white rounded-xl text-sm font-bold"
               >
-                Descargar Factura
+                Descargar en PDF
+              </button>
+
+              <button
+                onClick={() => {
+                  generarFacturaXML();
+                  setPreviewOpen(false);
+                  router.push("/perfil");
+                }}
+                className="flex-1 py-2 bg-emerald-600 text-white rounded-xl text-sm font-bold"
+              >
+                Descargar en XML
               </button>
             </div>
           </div>
