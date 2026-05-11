@@ -1,5 +1,5 @@
 "use server"
-import { registerCustomerSchema, addPointsSchema, loginSchema, updateCustomerSchema } from "./customer.schema";
+import { registerCustomerSchema, addPointsSchema, loginSchema, updateCustomerSchema, updatePasswordSchema } from "./customer.schema";
 import { CustomerService } from "./application/customer.service";
 import { CustomerRepository } from "./infrastructure/customer.repository";
 import { cookies } from "next/headers";
@@ -21,6 +21,11 @@ export async function registerCustomerAction(data: any) {
     } catch (error: any) {
         return { success: false, message: error.message || "Error al registrarse." };
     }
+}
+
+export async function updatePasswordAction(data: any) {
+    const parsed = updatePasswordSchema.parse(data);
+    return customerService.updatePassword(parsed.customerId, parsed.password, parsed.newpassword);
 }
 
 export async function addPointsAction(data: any) {

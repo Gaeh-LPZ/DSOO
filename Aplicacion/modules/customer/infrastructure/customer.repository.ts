@@ -83,4 +83,12 @@ export class CustomerRepository {
             data: { points: loyalty.points },
         });
     }
+
+    // Metodo actualiza password
+    async updatePassword(userId: string, hashedPassword: string): Promise<void> {
+        await prisma.customer.update({
+        where: { id: userId },
+        data: { password: hashedPassword },
+        });
+    }
 }

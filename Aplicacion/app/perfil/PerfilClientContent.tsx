@@ -7,6 +7,7 @@ import WelcomeModal from "./BienvenidaModal";
 import EnvioTab from "./EnvioTab";
 import PedidosTab from "./PedidosTab";
 import PagosTab from "./PagosTab";
+import SeguridadTab from "./SeguridadTab";
 
 type TabType = "datos" | "envios" | "pedidos" | "pagos" | "seguridad";
 
@@ -140,10 +141,10 @@ export default function PerfilClientContent({ userData }: Props) {
                     />
                 )}
 
-                {activeTab !== "datos" && activeTab !== "envios" && activeTab !== "pedidos" && activeTab !== "pagos"  &&(
-                    <div className="text-center py-20 text-slate-400">
-                        <p>Contenido de {activeTab} en desarrollo...</p>
-                    </div>
+                {activeTab === "seguridad" && (
+                    <SeguridadTab
+                        id={userData.id}
+                    />
                 )}
             </section>
         </div>

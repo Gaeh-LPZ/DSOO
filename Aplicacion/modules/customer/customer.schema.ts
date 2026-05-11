@@ -12,6 +12,12 @@ export const addPointsSchema = z.object({
   totalAmount: z.number().min(100),
 });
 
+export const updatePasswordSchema = z.object({
+  customerId: z.string(),
+  password: z.string().min(6),
+  newpassword: z.string().min(6),
+});
+
 export const loginSchema = z.object({
   email: z.email(),
   password: z.string().min(6)

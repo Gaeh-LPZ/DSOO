@@ -42,7 +42,6 @@ export class CustomerService {
 
   async login(email: string, password: string): Promise<{ token: string }> {
     const user = await this.repo.findByEmail(email);                                      // Busca usuario. NOTA: EL repo devuelve una entidad de dominio User
-
     if (!user) throw new Error("Credenciales inválidas");
 
     await user.authenticate(password, this.hashService);                                 // Delegar la validación de contraseña al DOMINIO (User.ts)
@@ -75,5 +74,15 @@ export class CustomerService {
       puntos: loyalty.points,
       numeroTarjeta: loyalty.cardNumber,
     };
+  }
+
+  async updatePassword(userId: string, password: string, newpassword: string) {
+    const customer = await this.repo.findById(userId)
+
+    const isValid = await this.hashService.compare(password, customer.getPassword());
+    if (!isValid) throw new Error("Contraseña actual incorrecta");
+
+    const hashedPassword = await this.hashService.hash(newpassword);
+    await this.repo.updatePassword(userId, hashedPassword);
   }
 }
