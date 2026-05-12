@@ -6,6 +6,8 @@ import { SaleRepository } from "../infrastructure/sale.repository";
 import { Payment, PaymentMethod } from "../domain/Payment";
 import { CustomerService } from "@/modules/customer/application/customer.service";
 import Stripe from "stripe";
+import { prisma } from '@/lib/prisma'
+import { SaleStatus } from "@prisma/client";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
@@ -183,5 +185,71 @@ export class SaleService {
 
     async cancelPendingSalesByCustomer(customerId: string) {
         return this.repo.cancelPendingByCustomer(customerId)
+    }
+
+    async cancelSale(saleId: string) {
+        try {
+            // 1. Iniciar Transacción (Database Prisma)
+            const result = await prisma.$transaction(async (tx) => {
+                
+                // 2. Verificar que la venta exista y obtener sus items
+                const sale = await tx.sale.findUnique({
+                    where: { id: saleId },
+                    include: { items: true } // Obtenemos los Sale Items
+                });
+
+                if (!sale) {
+                    throw new Error("La venta no existe");
+                }
+
+                // 3. Verificar que el estado no sea CANCELLED
+                if (sale.status === SaleStatus.CANCELLED) {
+                    throw new Error("El pedido ya se encuentra cancelado");
+                }
+
+                // 4. Actualizar estado de la Venta a CANCELLED
+                const updatedSale = await tx.sale.update({
+                    where: { id: saleId },
+                    data: { status: SaleStatus.CANCELLED }
+                });
+
+                // 5. Iterar sobre los Sale Items para regresar el stock
+                for (const item of sale.items) {
+                    
+                    // a) Actualizar Stock (Incrementar cantidad)
+                    await tx.stock.update({
+                        where: {
+                            productId_storeId: {
+                                productId: item.productId,
+                                storeId: sale.storeId // Usamos el storeId de la venta
+                            }
+                        },
+                        data: {
+                            quantity: { increment: item.quantity }
+                        }
+                    });
+
+                    // b) Insertar Stock Movement ('IN')
+                    await tx.stockMovement.create({
+                        data: {
+                            productId: item.productId,
+                            storeId: sale.storeId,
+                            quantity: item.quantity,
+                            type: "IN",
+                            reason: `Cancelación de pedido (Venta ID: ${saleId})`,
+                        }
+                    });
+                }
+
+                return updatedSale;
+            });
+
+            // 6. Retornar éxito
+            return { success: true, data: result };
+
+        } catch (error: any) {
+            console.error("Error cancelando la venta:", error);
+            throw new Error(error.message || "Error al cancelar la venta");
+        }
     }
 }

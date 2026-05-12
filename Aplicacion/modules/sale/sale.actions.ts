@@ -13,6 +13,7 @@ import { CustomerRepository } from "../customer/infrastructure/customer.reposito
 import { HashService } from "@/infrastructure/security/has.service"
 import { JwtService } from "@/infrastructure/security/jwt.service"
 import { getProductByIdAction } from "../product/product.actions"
+import { revalidatePath } from "next/cache"
 
 const saleRepo = new SaleRepository()
 const stockRepo = new StockRepository()
@@ -38,6 +39,18 @@ export async function getSaleAction(data: any) {
         id: sale.id,
         status: sale.getStatus(),
         total: sale.getTotal(),
+    }
+}
+
+export async function cancelSaleAction(saleId: string) {
+    try {
+        await saleService.cancelSale(saleId);
+        revalidatePath('/perfil');
+        revalidatePath('/admin/pedidos');
+        
+        return { success: true, message: "Pedido cancelado correctamente" };
+    } catch (error: any) {
+        return { success: false, error: error.message };
     }
 }
 

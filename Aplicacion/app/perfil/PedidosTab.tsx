@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getSalesByCustomerAction } from "@/modules/sale/sale.actions";
+import { getSalesByCustomerAction, cancelSaleAction } from "@/modules/sale/sale.actions";
 import { useRouter } from "next/navigation";
 
 interface SaleItemData {
@@ -81,9 +81,14 @@ export default function PedidosTab({ customerId, onVerEnvio }: Props) {
         cargar();
     }, [customerId]);
 
+    const handlePedidoCancelado = (saleId: string) => {
+        setPedidos(prev => prev.map(p => p.id === saleId ? { ...p, status: "CANCELLED" } : p));
+    };
+
     if (loading) return <PedidosSkeleton />;
     if (error) return <ErrorBox mensaje={error} />;
-    if (pedidos.length === 0) return <Vacio />;
+    const pedidosActivos = pedidos.filter(p => p.status !== "CANCELLED");
+    if (pedidosActivos.length === 0) return <Vacio />;
 
     return (
         <div>
@@ -104,6 +109,7 @@ export default function PedidosTab({ customerId, onVerEnvio }: Props) {
                                 setExpandido(prev => prev === pedido.id ? null : pedido.id)
                             }
                             onVerEnvio={onVerEnvio}
+                            onCancelado={handlePedidoCancelado}
                         />
                     ))
                 }
@@ -112,11 +118,26 @@ export default function PedidosTab({ customerId, onVerEnvio }: Props) {
     );
 }
 
-function TarjetaPedido({ pedido, expandido, onToggle, onVerEnvio, }: { pedido: PedidoData; expandido: boolean; onToggle: () => void; onVerEnvio: (saleId: string) => void; }) {
+function TarjetaPedido({ pedido, expandido, onToggle, onVerEnvio, onCancelado}: { pedido: PedidoData; expandido: boolean; onToggle: () => void; onVerEnvio: (saleId: string) => void; onCancelado: (saleId: string) => void;}) {
     const { shipment } = pedido;
     const entregado = shipment?.status === "DELIVERED";
     const router = useRouter();
+    const [isCancelling, setIsCancelling] = useState(false);
 
+    const handleCancelar = async () => {
+        if (!window.confirm("¿Estás seguro de que deseas cancelar este pedido? Esta acción no se puede deshacer.")) return;
+        
+        setIsCancelling(true);
+        const res = await cancelSaleAction(pedido.id);
+        setIsCancelling(false);
+
+        if (res.success) {
+            onCancelado(pedido.id);
+        } else {
+            alert(res.error || "Hubo un error al cancelar el pedido.");
+        }
+    };
+    
     const fecha = new Date(pedido.createdAt).toLocaleDateString("es-MX", {
         day: "2-digit", month: "short", year: "numeric",
     });
@@ -130,7 +151,7 @@ function TarjetaPedido({ pedido, expandido, onToggle, onVerEnvio, }: { pedido: P
             <div className="flex items-center gap-4 px-5 py-4">
 
                 {/* Icono */}
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0
                     ${entregado
                         ? "bg-emerald-100 text-emerald-600"
                         : shipment
@@ -266,6 +287,22 @@ function TarjetaPedido({ pedido, expandido, onToggle, onVerEnvio, }: { pedido: P
                     )}
 
                     <div className="mt-3 flex justify-end">
+                        {!entregado && (
+                            <button
+                                onClick={handleCancelar}
+                                disabled={isCancelling}
+                                className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full 
+                                    border border-red-200 text-red-600 
+                                    hover:bg-red-50 hover:border-red-300
+                                    transition-all duration-200 disabled:opacity-50"
+                            >
+                                <span className="material-symbols-outlined" style={{ fontSize: "14px" }}>
+                                    cancel
+                                </span>
+                                {isCancelling ? "Cancelando..." : "Cancelar Pedido"}
+                            </button>
+                        )}
+                        
                         {/* Factura */}
                         <button
                             onClick={() => router.push(`/facturacion/${pedido.id}`)}
