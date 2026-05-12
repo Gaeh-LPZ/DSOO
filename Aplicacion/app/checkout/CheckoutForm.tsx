@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements, PaymentElement, useStripe, useElements, } from "@stripe/react-stripe-js";
-import { paySaleAction } from "@/modules/sale/sale.actions";
+import { payOnlineSaleAction} from "@/modules/sale/sale.actions";
 
 // Inicializa Stripe 
 const stripePromise = loadStripe(
@@ -28,7 +28,7 @@ function formatMXN(amount: number): string {
 }
 
 // Componente interno: el formulario real con PaymentElement
-function StripePaymentForm({ total, saleId, onSuccess, onCancel }: { // <--- Agregamos saleId aquí
+function StripePaymentForm({ total, saleId, onSuccess, onCancel }: { //  Agregamos saleId aquí
   total: number;
   saleId: string; // <--- Y definimos su tipo aquí
   onSuccess?: () => void;
@@ -59,9 +59,8 @@ function StripePaymentForm({ total, saleId, onSuccess, onCancel }: { // <--- Agr
       setErrorMessage(error.message ?? "Ocurrió un error al procesar el pago.");
       setIsProcessing(false);
     } else if (paymentIntent && paymentIntent.status === "succeeded") {
-      // ✅ EL PAGO PASÓ EN STRIPE. AHORA AVISAMOS AL BACKEND:
       try {
-        await paySaleAction({
+        await payOnlineSaleAction({
           saleId: saleId, // Pasamos el ID de la venta que recibimos por props
           amount: total,  // Pasamos el total que recibimos por props
           method: "CARD", // El método según tu Enum de Prisma

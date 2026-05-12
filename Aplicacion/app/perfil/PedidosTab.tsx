@@ -93,17 +93,20 @@ export default function PedidosTab({ customerId, onVerEnvio }: Props) {
             </p>
 
             <div className="flex flex-col gap-3">
-                {pedidos.map(pedido => (
-                    <TarjetaPedido
-                        key={pedido.id}
-                        pedido={pedido}
-                        expandido={expandido === pedido.id}
-                        onToggle={() =>
-                            setExpandido(prev => prev === pedido.id ? null : pedido.id)
-                        }
-                        onVerEnvio={onVerEnvio}
-                    />
-                ))}
+                {pedidos
+                    .filter(pedido => pedido.status !== "CANCELLED")
+                    .map(pedido => (
+                        <TarjetaPedido
+                            key={pedido.id}
+                            pedido={pedido}
+                            expandido={expandido === pedido.id}
+                            onToggle={() =>
+                                setExpandido(prev => prev === pedido.id ? null : pedido.id)
+                            }
+                            onVerEnvio={onVerEnvio}
+                        />
+                    ))
+                }
             </div>
         </div>
     );

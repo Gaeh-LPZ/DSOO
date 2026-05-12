@@ -110,6 +110,20 @@ export class SaleRepository {
                         throw new Error("Stock insuficiente al confirmar venta");
                     }
                 }
+
+                const existingShipment = await tx.shipment.findUnique({
+                    where: { saleId }
+                })
+
+                if (!existingShipment) {
+                    await tx.shipment.create({
+                        data: {
+                            saleId,
+                            status: "PENDING",
+                            tracking: null,
+                        }
+                    })
+                }
             }
 
             // Guardar pago y estado
@@ -243,7 +257,7 @@ export class SaleRepository {
             },
             take: limit
         })
-    
+
         const withDetails = await Promise.all(
             result.map(async (item) => {
                 const product = await prisma.product.findUnique({
@@ -273,7 +287,7 @@ export class SaleRepository {
                 }
             })
         )
-    
+
         return withDetails
     }
     async getTotalSalesByStore() {
@@ -292,7 +306,7 @@ export class SaleRepository {
                 }
             }
         })
-    
+
         const withTotals = await Promise.all(
             stores.map(async (store) => {
                 const total = await prisma.sale.aggregate({
@@ -310,7 +324,7 @@ export class SaleRepository {
                 }
             })
         )
-    
+
         return withTotals
     }
     async getSalesByDayOfWeek(storeId?: string) {
@@ -324,7 +338,7 @@ export class SaleRepository {
                 total: true,
             }
         })
-    
+
         const days = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
         const result = days.map((day, i) => ({
             day,
@@ -332,7 +346,7 @@ export class SaleRepository {
                 .filter(s => new Date(s.createdAt).getDay() === i)
                 .reduce((sum, s) => sum + s.total, 0)
         }))
-    
+
         return result
     }
 
@@ -367,7 +381,7 @@ export class SaleRepository {
             orderBy: { _sum: { quantity: 'desc' } },
             take: limit
         })
-    
+
         const withDetails = await Promise.all(
             result.map(async (item) => {
                 const product = await prisma.product.findUnique({
@@ -396,7 +410,14 @@ export class SaleRepository {
                 }
             })
         )
-    
+
         return withDetails
+    }
+
+    async cancelPendingByCustomer(customerId: string): Promise<void> {
+        await prisma.sale.updateMany({
+            where: { customerId, status: "PENDING" },
+            data: { status: "CANCELLED" }
+        })
     }
 }

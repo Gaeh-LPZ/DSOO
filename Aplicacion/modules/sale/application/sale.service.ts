@@ -28,7 +28,7 @@ export class SaleService {
     ) { }
 
     // Caso de Uso: Crear Venta
-    async createSale(data: { userId: string; storeId: string; customerId?: string; items: { productId: string; quantity: number }[]}) {
+    async createSale(data: { userId: string; storeId: string; customerId?: string; items: { productId: string; quantity: number }[] }) {
         if (data.items.length === 0) throw new Error("La venta debe tener al menos un item")
 
         let storeId = data.storeId
@@ -61,7 +61,7 @@ export class SaleService {
     }
 
     // Encuentra la primera tienda que tenga stock de TODOS los productos
-    private async findStoreWithStock( items: { productId: string; quantity: number }[]): Promise<string> {
+    private async findStoreWithStock(items: { productId: string; quantity: number }[]): Promise<string> {
         // Obtener todas las tiendas excepto la online
         const stores = await this.stockRepo.findAllStores()
         const realStores = stores.filter(s => s.id !== process.env.STORE_ONLINE_ID)
@@ -179,5 +179,9 @@ export class SaleService {
 
     async getTopProductsByDateRange(startDate: Date, endDate: Date, limit: number = 10) {
         return this.repo.findTopProductsByDateRange(startDate, endDate, limit)
+    }
+
+    async cancelPendingSalesByCustomer(customerId: string) {
+        return this.repo.cancelPendingByCustomer(customerId)
     }
 }

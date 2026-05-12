@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { getCartAction, addToCartAction, removeCartItemAction, updateCartItemQuantityAction, } from "@/modules/carrito/carrito.actions";
-import { createSaleFromCartAction } from "@/modules/sale/sale.actions";
+import { cancelPendingSalesAction, createSaleFromCartAction } from "@/modules/sale/sale.actions";
 
 interface CartItem {
   id: string;
@@ -30,6 +30,8 @@ export default function CarritoForm() {
   const router = useRouter();
   const productId = searchParams.get("id");
 
+  const [address, setAddress] = useState("");
+  const [addressError, setAddressError] = useState(false);
   const [items, setItems] = useState<CartItem[]>([]);
   const [serverTotal, setServerTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -54,9 +56,12 @@ export default function CarritoForm() {
 
   const hasAddedRef = useRef(false);    //Agregarlo para no dos cargos de producto
 
+
+
   useEffect(() => {
     async function init() {
       setLoading(true);
+      await cancelPendingSalesAction()
 
       if (productId && !hasAddedRef.current) {
         hasAddedRef.current = true;
@@ -390,16 +395,61 @@ export default function CarritoForm() {
         {/* checkout */}
         {items.length > 0 && (
           <div className="space-y-8">
+            {/* Dirección de envío */}
+            <section className="mb-6 p-8" style={{ backgroundColor: "#f4f4ef" }}>
+              <h3
+                className="text-xl font-bold mb-6"
+                style={{ fontFamily: "Noto Serif, serif" }}
+              >
+                Dirección de envío
+              </h3>
+
+              <label
+                className="block text-[10px] font-bold uppercase mb-2"
+                style={{ letterSpacing: "0.2em", color: "#414844" }}
+              >
+                Dirección completa
+              </label>
+
+              <input
+                type="text"
+                value={address}
+                onChange={(e) => {
+                  setAddress(e.target.value);
+                  if (e.target.value.trim()) setAddressError(false);
+                }}
+                placeholder="Calle, número, colonia, ciudad, estado..."
+                className="w-full px-4 py-3 text-sm"
+                style={{
+                  border: addressError ? "1px solid #c0392b" : "1px solid #c1c8c2",
+                  borderRadius: 0,
+                  backgroundColor: "#fafaf5",
+                  outline: "none",
+                }}
+              />
+
+              {addressError && (
+                <p className="text-xs mt-2" style={{ color: "#c0392b", letterSpacing: "0.05em" }}>
+                  Ingresa una dirección para continuar
+                </p>
+              )}
+            </section>
+
             <button
               onClick={async () => {
+                if (!address.trim()) {
+                  setAddressError(true);
+                  return;
+                }
                 const saleId = await createSaleFromCartAction();
                 router.push(`/checkout?saleId=${saleId}`);
               }}
               className="w-full py-5 text-[12px] font-bold uppercase text-white transition-opacity hover:opacity-90 active:scale-[0.98]"
               style={{
-                backgroundColor: "#042419",
+                backgroundColor: address.trim() ? "#042419" : "#9aaa9e",
                 letterSpacing: "0.3em",
                 borderRadius: "0",
+                cursor: address.trim() ? "pointer" : "not-allowed",
               }}
             >
               Proceder al Pago

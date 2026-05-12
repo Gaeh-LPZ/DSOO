@@ -29,12 +29,6 @@ export async function createSaleAction(data: any) {
     return saleService.createSale(parsed)
 }
 
-export async function paySaleAction(data: any) {
-    //await requireRole("CAJERO")
-    const parsed = paySaleSchema.parse(data)
-    await saleService.paySale(parsed.saleId, parsed.amount, parsed.method)
-    return { success: true }
-}
 
 export async function getSaleAction(data: any) {
     const parsed = getSaleSchema.parse(data)
@@ -137,7 +131,7 @@ export async function createSaleFromCartAction() {
         items,
     })
 
-    await clearCartAction()
+    //await clearCartAction()
     return sale.id
 }
 
@@ -149,7 +143,7 @@ export async function getSaleSummaryAction(saleId: string) {
 
         const itemsConNombre = await Promise.all(
             itemsRaiz.map(async (item) => {
-                const producto = await getProductByIdAction({id: item.getProductId()}); //Checar
+                const producto = await getProductByIdAction({ id: item.getProductId() }); //Checar
                 return {
                     nombre: producto?.name || "Producto desconocido",
                     cantidad: item.getQuantity(),
@@ -198,4 +192,19 @@ export async function getLowStockAction() {
 export async function getTopProductsByDateRangeAction(data: any) {
     const parsed = getTopProductsByDateRangeSchema.parse(data)
     return saleService.getTopProductsByDateRange(parsed.startDate, parsed.endDate, parsed.limit)
+}
+
+export async function cancelPendingSalesAction() {
+    const session = await getSession()
+    if (!session) return
+    await saleService.cancelPendingSalesByCustomer(session.userId)
+}
+
+export async function payOnlineSaleAction(data: { saleId: string; amount: number; method: string }) {
+    const session = await getSession()
+    if (!session) throw new Error("No autorizado")
+    const parsed = paySaleSchema.parse(data)
+    await saleService.paySale(parsed.saleId, parsed.amount, parsed.method)
+    await clearCartAction()
+    return { success: true }
 }
