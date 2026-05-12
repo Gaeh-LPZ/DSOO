@@ -20,14 +20,17 @@ export default function LoginForm() {
 
         try {
             const isEmployee = email.endsWith("@luxury.com")
-            
-            if(isEmployee){
+
+            if (isEmployee) {
                 // Login Empleados
-                await loginAction({email, password})
+                const { role } = await loginAction({ email, password })
                 router.refresh()
-                router.push("/admin")  
-            }else{
-                await loginCustomerAction({email, password})
+
+                if (role === "ADMIN") router.push("/admin")
+                else if (role === "GERENTE") router.push("/gerente")
+                else router.push("/dashboard")
+            } else {
+                await loginCustomerAction({ email, password })
                 router.refresh()
                 router.push("/perfil")
             }

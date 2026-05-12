@@ -28,6 +28,7 @@ export async function loginAction(data: any) {
                 secure: true,
                 maxAge: 60 * 60 * 10 // 10 horas
             })
+    return { role: result.role }
 }
 
 export async function listUsersAction() {

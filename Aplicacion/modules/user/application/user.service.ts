@@ -31,7 +31,7 @@ export class UserService {
   }
 
   // Caso de uso: Loguear Usuario
-  async login(email: string, password: string): Promise<{ token: string }> {
+  async login(email: string, password: string): Promise<{ token: string ; role: string}> {
     const user = await this.repo.findByEmail(email);                                      // Busca usuario. NOTA: EL repo devuelve una entidad de dominio User
 
     if (!user) throw new Error("Credenciales inválidas");
@@ -43,7 +43,11 @@ export class UserService {
       roles: user.roles.map(r => r.name),
     });
 
-    return { token };
+    return { 
+      token,
+      role: user.roles[0]?.name ?? "EMPLEADO"
+
+     };
   }
 
   // Caso de uso: Asignar rol 
