@@ -13,7 +13,7 @@ export default function Header() {
     ]    
 
     const pathname = usePathname();
-    if (pathname === '/reporteGerencial') {
+    if (pathname === '/reporteGerencial' || pathname === '/admin') {
         return null;
     }
 

@@ -27,7 +27,7 @@ export default function LoginForm() {
                 router.refresh()
 
                 if (role === "ADMIN") router.push("/admin")
-                else if (role === "GERENTE") router.push("/gerente")
+                else if (role === "GERENTE") router.push("/reporteGerencial")
                 else router.push("/dashboard")
             } else {
                 await loginCustomerAction({ email, password })

@@ -6,6 +6,7 @@ import {
   getLowStockAction,
 } from "@/modules/sale/sale.actions"
 import GraficaBarras from "./ui/GraficaBarras"
+import { CloseLoginAction } from "@/share/closeSession"
 
 const STORE_ID = "store-central"
 const STORE_NAME = "Sucursal Central"
@@ -77,6 +78,14 @@ export default async function ReporteGerencialPage() {
               <span className="text-sm font-medium tracking-wide">Por Área</span>
             </button>
           </Link>
+
+          <button
+            onClick={CloseLoginAction}
+            className="flex items-center gap-3 px-4 py-3 rounded-lg text-red-600 hover:bg-red-50 w-full text-left"
+          >
+            <span className="material-symbols-outlined">logout</span> Cerrar Sesión
+          </button>
+
         </nav>
         <div className="p-4 border-t border-slate-100">
           <button className="w-full flex items-center gap-4 px-4 py-3 text-slate-400 hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-colors">
